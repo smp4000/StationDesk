@@ -3,6 +3,8 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Owner\Auth\Register;
+use App\Filament\Owner\Auth\RequestPasswordReset;
+use App\Filament\Owner\Auth\ResetPassword;
 use App\Filament\Owner\Auth\VerifyEmailPrompt;
 use App\Http\Middleware\InitializeOwnerTenancy;
 use App\Onboarding\RegisterOwner;
@@ -33,7 +35,7 @@ class OwnerPanelProvider extends PanelProvider
             ->path('owner')
             ->login()
             ->registration(RegisterOwner::available() ? Register::class : null)
-            ->passwordReset()
+            ->passwordReset(RequestPasswordReset::class, ResetPassword::class)
             ->emailVerification(VerifyEmailPrompt::class)
             ->authGuard('web')
             ->authPasswordBroker('owners')

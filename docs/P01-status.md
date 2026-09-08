@@ -14,6 +14,8 @@ Stand: 08.09.2026. P01 ist in Arbeit, nicht abgeschlossen und nicht für Produkt
 - Lokale Registrierung unter /owner/register mit Chef, Firmen-/Rechnungsanschrift und erster Tankstelle.
 - Atomare Registrierung mit intern erzeugten Mandanten-/Stations-IDs und Preis-Snapshot; keine Bereitstellung vor E-Mail-Bestätigung.
 - Bestätigungsmail und begrenzter Neuversand über das gespeicherte Plattform-SMTP-Profil; sichere Fehleranzeige bei Versandproblemen.
+- Owner-Passwortwiederherstellung über denselben SMTP-Absender und das gemeinsame HTML-Mail-Layout mit Klartextalternative.
+- Neutrale Reset-Rückmeldung für vorhandene/unbekannte Adressen; zeitlich begrenzte Einmal-Tokens im getrennten Owner-Broker und mindestens zwölf Zeichen für neue Passwörter.
 - Dauerhafte Testkennzeichnung in Registrierungsauftrag und Abo; lokale Registrierungen sind keine kostenpflichtigen Vertragsabschlüsse.
 - Automatisch aktualisierte Bereitstellungsseite, eigener Fehlerzustand und Trial-Ende in der Stationsübersicht.
 - Fehlgeschlagene Bereitstellung mit bereinigten Fehlercodes und administrativem Retry.
@@ -31,7 +33,13 @@ Stand: 08.09.2026. P01 ist in Arbeit, nicht abgeschlossen und nicht für Produkt
 
 ## Nachgewiesene Prüfungen
 
-69 projektspezifische Tests mit 332 Assertions bestanden auf MySQL 8.4.9.
+75 projektspezifische Tests mit 386 Assertions bestanden auf MySQL 8.4.9.
+Sechs zusätzliche Wiederherstellungstests prüfen Owner-/Admin-Trennung, Reset-Anfrage,
+Tokenverbrauch und Ablauf, Passwortwechsel mit Remember-Token-Erneuerung, SMTP-Ausfälle
+sowie übereinstimmende HTML-/Textlinks. Auch der nach der Mailgestaltung noch offene
+datenbankgestützte Versandtest wurde erfolgreich nachgeholt.
+Die tatsächliche lokale Registrierung ist inzwischen bestätigt und erfolgreich bereitgestellt;
+der Provisionierungsworker läuft und seine Warteschlange war bei der Prüfung leer.
 Geprüft wurden Daten-/Cache-/Dateitrennung, direkte Fremd-SQL-Abfragen, fehlende DDL-Rechte
 des Tenant-Nutzers, wiederverwendete Models nach Kontextwechsel, Bootstrapfehler,
 Trial-Idempotenz, Worker-Retries, E-Mail-Bestätigung, Guard-Trennung, TOTP-Einrichtung,
@@ -62,10 +70,9 @@ Inzwischen fachlich bestätigt, aber noch nicht implementiert:
 
 Weiterhin umzusetzen:
 
-- Öffentliches Registrierungsformular mit vollständiger Firmen-/Rechnungsanschrift,
-  verbindlicher Vertrags- und Mandatsannahme sowie tatsächlichem Bestätigungsversand.
-- Anbindung der gespeicherten Einstellungen an Registrierung, Vertragsannahme, SMTP-Versand
-  und FinTS-Adapter. Die Einstellungsseite löst keine Netzwerkaktionen aus.
+- Öffentliche Freigabe der vorhandenen lokalen Registrierung mit verbindlicher Vertrags- und Mandatsannahme.
+- Anbindung der gespeicherten Einstellungen an Vertragsannahme und echten FinTS-Zahlungsverkehr.
+  Speichern allein löst keine Netzwerkaktionen aus; die ausdrücklichen Testaktionen tun dies.
 - Modulkatalog und automatisierte Upgrades bereits bereitgestellter Mandanten.
 - Periodische Abrechnung, Kündigung, Belege und SEPA-Vorabankündigungen.
 - FinTS-Einreichung, SecureGo-Freigabe, Umsatzabgleich und Rücklastschriften.
@@ -74,8 +81,10 @@ Weiterhin umzusetzen:
 - Produktive DB-Verbindungen.
 
 FinTS-Vorgabe: VR Bank Fulda, SecureGo plus, eigene Produktregistrierungsnummer vorhanden.
-Die Nummer und Bankzugangsdaten sind noch nicht in der Anwendung hinterlegt.
-Keine Bankzugriffe, Zahlungsaufträge oder echten E-Mails wurden ausgeführt.
+Die eigene Produktnummer kann in den Plattform-Einstellungen gepflegt werden; Bankzugangsdaten
+werden für die zeitlich begrenzten Testdialoge erfasst. Keine Zahlungsaufträge wurden vom Agenten
+ausgeführt. Die automatisierten Mailprüfungen senden nicht extern; die vom Nutzer ausgelöste
+Registrierung hat bereits eine echte Bestätigungsmail geliefert.
 
 ## Plattform-Einstellungen
 
