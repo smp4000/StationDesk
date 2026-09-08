@@ -36,6 +36,11 @@
         }
     },
     "scripts": {
+        "clear-ui-cache": [
+            "@php artisan filament:clear-cached-components --no-interaction",
+            "@php artisan route:clear --no-interaction",
+            "@php artisan view:clear --no-interaction"
+        ],
         "setup": [
             "composer install",
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",

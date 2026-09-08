@@ -135,6 +135,24 @@ Pilotprüfung mit den persönlich eingegebenen Zugangsdaten aus.
 
 ## Lokale Verwendung
 
+### Nach Änderungen an Admin-Seiten
+
+Ein veralteter Filament-Komponentencache kann neue Seiten im Webprozess ausblenden,
+während artisan route:list sie bereits korrekt auflistet: Filament 5 berücksichtigt
+diesen Cache nur außerhalb der Konsole. Bei der Importseite führte das zum Fehler
+„Route [filament.admin.pages.bank-directory-import] not defined“ in den Einstellungen.
+Nach Hinzufügen oder Umbenennen von Panel-Seiten daher die UI-Caches erneuern:
+
+~~~powershell
+& 'C:\php84\php.exe' 'C:\ProgramData\ComposerSetup\bin\composer.phar' run clear-ui-cache
+~~~
+
+Der Befehl entfernt gezielt Filament-Komponenten-, Routen- und Ansichtscaches.
+Anwendungsdaten, Sitzungen, Datenbankschlüssel und laufende Bankdialoge bleiben erhalten.
+Anschließend die tatsächliche Webroute prüfen; eine reine Konsolenprüfung genügt hier nicht.
+Am lokalen Server localhost:8000 wurde die Importseite nach Bereinigung mit HTTP 302
+zur Admin-Anmeldung erreicht, statt wegen einer fehlenden Route abzubrechen.
+
 ### Bundesbank-CSV und IBAN-Hilfe
 
 Die öffentliche Bundesbank-CSV vom 07.09.2026 bis 06.12.2026 wurde lokal importiert:
