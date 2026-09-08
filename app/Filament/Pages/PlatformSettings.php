@@ -8,6 +8,7 @@ use App\Settings\FintsReadOnlyTest;
 use App\Settings\PlatformSettingsStore;
 use App\Settings\SendPlatformTestMail;
 use App\Settings\TestFintsConnection;
+use BackedEnum;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Validation\ValidationException;
@@ -22,6 +23,8 @@ class PlatformSettings extends Page
     protected static ?string $title = 'Plattform-Einstellungen';
 
     protected static ?string $navigationLabel = 'Einstellungen';
+
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-cog-6-tooth';
 
     public array $data = [];
 
