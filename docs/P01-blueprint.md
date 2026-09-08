@@ -379,3 +379,52 @@ Es bestehen weiterhin keine veröffentlichten Vertrags-/Mandatstexte. Die lokale
 MySQL-8.4-Instanz auf Port 3307 ist mit der zentralen Datenbank stationdesk eingerichtet.
 Die Einrichtung erfolgte mit dem bestätigten lokalen Root-Zugang; Webprozess und Worker
 verwenden eigene Konten. Das lokale Super-Admin-Konto ist vorhanden; Produktivbetrieb bleibt offen.
+
+## Bestätigter Umfang und technischer Entwurf: Tankstellen, Mitarbeiter und Zugänge
+
+Arbeitsstand zum Pausieren: Fachliche Antworten sind erfasst, der folgende technische
+Entwurf ist noch nicht implementiert. Keine neuen Migrationen wurden ausgeführt.
+Fortsetzung: zuerst Stationsverwaltung und zusätzliche Abos ohne Trial, danach
+Mitarbeiterverwaltung, Stationsrechte und Anmeldewege mit Tests. Die technischen Details
+zu Aktivierung, Tokenausgabe, Widerruf und Wiederholbarkeit sind Umsetzungsvorschläge.
+
+Der Nutzer hat den Ausbau der Verwaltung vorgezogen. Nur die erste Station bekommt
+30 Tage Trial. Weitere Stationen starten ohne Trial mit dem beim Anlegen gültigen
+Stationspreis und eigener Monatsperiode; lokal bleiben diese Abos Tests.
+
+Der Chef verwaltet alle Stationen und Mitarbeiter seines Betriebs. Stationsleitungen
+sehen ihre zugewiesenen Stationen und dürfen dort Stammdaten sowie normale Mitarbeiter
+verwalten. Sie dürfen weder Stationen anlegen, Abos/Zahlungs- oder Gehaltsdaten verwalten,
+Leitungsrechte vergeben noch Daten löschen. Normale Mitarbeiter sehen ihre eigene
+Identität und die ihnen zugewiesenen Stationen. Vergaben gelten je Station. Bestehende
+Chef-Datensätze bleiben geschützt. Mitarbeiter mit Zuständigkeiten außerhalb der eigenen
+Leitungsstationen werden nicht über die eingeschränkte Leitung bearbeitet.
+
+Bestätigte Anmeldewege: MDE per QR, NFC oder E-Mail/PIN; Web zusätzlich E-Mail/Passwort.
+Zunächst ausdrücklich Scanner mit Tastatureingabe; Hersteller/Modelle stehen noch nicht
+fest. QR und NFC verwenden zufällige, widerrufbare Zugangstoken, keine bloßen Chip-UIDs.
+Die NFC-Karte muss den ausgegebenen Zugangscode liefern. PIN und Passwort werden gehasht.
+PIN-Anmeldung wird pro Identität und IP begrenzt. Jeder deaktivierte oder erneuerte Zugang
+verliert auch bestehende Sitzungen. Zugangsdaten erscheinen nicht in Audit-Ereignissen.
+
+Umsetzung: Owner-Menüs Tankstellen und Mitarbeiter; responsive Mitarbeiteroberfläche
+mit derselben stationsbezogenen Rechteprüfung. Stationsformulare für Stammdaten und
+Kontakt, Mitarbeiterformulare für Namen, E-Mail, Telefon sowie Stationsrollen. Keine
+Personalfragebögen, Lohnfelder, Schichten, Gruppenzuweisungen oder Offline-Anmeldung.
+Aktivierungslinks sind befristet und einmalig; Mitarbeiter setzen PIN und optional ein
+Passwort selbst. Einladungsversand wird ausdrücklich im Formular ausgelöst. Der bisherige
+Owner-Login bleibt getrennt. Die persönliche Farbauswahl soll auch Mitarbeiterzugängen
+zur Verfügung stehen.
+
+Zentrale Loginreferenzen enthalten nur die zur Anmeldung benötigten Identifikatoren und
+Geheimnishashes; Fachstammdaten und Stationsrechte bleiben in der jeweiligen Tenant-DB.
+Stationsanlage verwendet einen wiederholbaren Auftrag mit Preisstand; ein unterbrochener
+Ablauf darf weder eine zweite Station noch ein zweites Abo erzeugen. Tenant-Migrationen
+laufen ausschließlich mit dem gesonderten Verwaltungszugang, nie im Webprozess.
+
+Abnahme: zusätzliche Station ohne Trial; unveränderte erste Station; idempotente Anlage;
+Chef-Vollzugriff nur im eigenen Tenant; Leitung ausschließlich für eigene Stationen;
+keine Selbstbeförderung; normale Mitarbeiter ohne Verwaltungszugriff; fremde IDs und
+veraltete Sitzungen abgewiesen; Aktivierungsablauf, PIN/Passwort und QR/NFC-Tokenlogin,
+Widerruf, begrenzte Fehlversuche und E-Mail-Versand mit Testtransport. Hardwareprüfung
+folgt, sobald die tatsächlichen Scanner feststehen. Lokaler Pilot, keine produktive Freigabe.
