@@ -27,7 +27,7 @@
         ];
     @endphp
     <section class="sd-intro"><div><span class="sd-eyebrow">PLATTFORM</span><h2>Die Grundlagen an einem Ort.</h2><p>Jeder Bereich wird separat gespeichert. Beim Speichern werden keine E-Mails oder Bankaufträge versendet.</p></div></section>
-    <div x-data="{ tab: 'billing' }" class="sd-settings">
+    <div x-data="{ tab: 'billing' }" x-on:open-bank-directory.window="tab = 'banks'; $nextTick(() => $refs.bankTab.focus())" class="sd-settings">
         <div role="tablist" aria-label="Einstellungsbereiche" class="sd-settings-tabs">
             @foreach ($groups as $group => $definition)
                 <button type="button" id="tab-{{ $group }}" role="tab" aria-controls="panel-{{ $group }}"
@@ -39,6 +39,11 @@
                     @if ($errors->has('data.'.$group.'.*')) <span aria-label="Fehler">!</span> @endif
                 </button>
             @endforeach
+            <button type="button" id="tab-banks" x-ref="bankTab" role="tab" aria-controls="panel-banks"
+                x-bind:aria-selected="tab === 'banks'" x-on:click="tab = 'banks'"
+                x-on:keydown.right.prevent="const next = $el.parentElement.firstElementChild; next.focus(); next.click()"
+                x-on:keydown.left.prevent="const previous = $el.previousElementSibling; previous.focus(); previous.click()"
+                x-bind:tabindex="tab === 'banks' ? 0 : -1">Bankenstamm / CSV-Import</button>
         </div>
         @foreach ($groups as $group => $definition)
             <section x-show="tab === '{{ $group }}'" @if ($group !== 'billing') x-cloak @endif id="panel-{{ $group }}" role="tabpanel" aria-labelledby="tab-{{ $group }}" class="sd-surface">
@@ -103,7 +108,7 @@
                         <x-slot name="heading">IBAN-Hilfe · deutscher Bankenstamm</x-slot>
                         <div class="sd-settings-form">
                         <p>Bankname und BIC stammen aus der importierten Bundesbank-CSV.</p>
-                        <p><a href="{{ \App\Filament\Pages\BankDirectoryImport::getUrl() }}">Bankenstamm aktualisieren / neue CSV importieren →</a></p>
+                        <p><x-filament::button type="button" color="gray" x-on:click="$dispatch('close-modal', { id: 'iban-help' }); $dispatch('open-bank-directory')">Bankenstamm aktualisieren / neue CSV importieren →</x-filament::button></p>
                         <form wire:submit="proposeIban" class="sd-settings-grid">
                             <div class="sd-settings-field"><label for="iban-bank-code">Bankleitzahl</label><input id="iban-bank-code" wire:model="bankCode" inputmode="numeric" maxlength="8" required>@error('bankCode')<span role="alert" class="sd-field-error">{{ $message }}</span>@enderror</div>
                             <div class="sd-settings-field"><label for="iban-account-number">Kontonummer</label><input id="iban-account-number" wire:model="accountNumber" inputmode="numeric" maxlength="10" autocomplete="off" required>@error('accountNumber')<span role="alert" class="sd-field-error">{{ $message }}</span>@enderror</div>
@@ -179,5 +184,8 @@
                 @endif
             </section>
         @endforeach
+        <section x-show="tab === 'banks'" x-cloak id="panel-banks" role="tabpanel" aria-labelledby="tab-banks">
+            @livewire(\App\Filament\Pages\BankDirectoryImport::class, [], key('settings-bank-directory'))
+        </section>
     </div>
 </x-filament-panels::page>

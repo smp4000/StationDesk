@@ -1,4 +1,4 @@
-<x-filament-panels::page>
+<div class="sd-settings">
     <section class="sd-intro"><div><span class="sd-eyebrow">BUNDESBANK</span><h2>Den Bankenstamm aktuell halten.</h2><p>Neue öffentliche Bundesbank-CSV hochladen. Die Gültigkeit bestimmt, ab wann ein Datenstand verwendet wird.</p></div></section>
     <section class="sd-surface">
         <header><h2>Verwendeter Datenstand</h2><span>{{ $active ? 'Import #'.$active->id : 'Kein gültiger Import' }}</span></header>
@@ -28,4 +28,4 @@
             @empty<tr><td colspan="4">Noch keine CSV importiert.</td></tr>@endforelse
         </tbody></table></div>
     </section>
-</x-filament-panels::page>
+</div>

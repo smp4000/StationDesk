@@ -22,7 +22,7 @@ class BankDirectoryImport extends Page
 
     protected static ?string $navigationLabel = 'Bankenstamm / CSV-Import';
 
-    protected static ?string $navigationParentItem = 'Einstellungen';
+    protected static bool $shouldRegisterNavigation = false;
 
     public $csvFile = null;
 
