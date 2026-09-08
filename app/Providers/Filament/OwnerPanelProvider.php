@@ -8,6 +8,7 @@ use App\Filament\Owner\Auth\ResetPassword;
 use App\Filament\Owner\Auth\VerifyEmailPrompt;
 use App\Http\Middleware\InitializeOwnerTenancy;
 use App\Onboarding\RegisterOwner;
+use App\Settings\OwnerAppearance;
 use Filament\FontProviders\LocalFontProvider;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -17,6 +18,7 @@ use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\Width;
+use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
@@ -44,9 +46,8 @@ class OwnerPanelProvider extends PanelProvider
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->darkMode(false)
             ->maxContentWidth(Width::Full)
-            ->colors([
-                'primary' => Color::Teal,
-            ])
+            ->colors(fn () => ['primary' => Color::hex(app(OwnerAppearance::class)->current()['primary'])])
+            ->renderHook(PanelsRenderHook::HEAD_END, fn () => view('filament.owner.appearance-style'))
             ->discoverResources(in: app_path('Filament/Owner/Resources'), for: 'App\Filament\Owner\Resources')
             ->discoverPages(in: app_path('Filament/Owner/Pages'), for: 'App\Filament\Owner\Pages')
             ->pages([

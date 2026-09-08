@@ -16,6 +16,9 @@
                 </dl>
                 @if ($subscription['cancelled_at'])
                     <p role="status">Kündigung erklärt am {{ $date($subscription['cancelled_at']) }}. {{ $subscription['ended'] ? 'Das Ende ist erreicht.' : 'Bis zum bestätigten Endtermin läuft das Abo weiter.' }} Es wird danach nicht verlängert.</p>
+                    @if ($subscription['can_reactivate'])
+                        <div><x-filament::button wire:click="prepareReactivation({{ $subscription['id'] }})" wire:loading.attr="disabled" aria-haspopup="dialog">{{ $subscription['ended'] ? 'Abo reaktivieren' : 'Kündigung zurückziehen' }}</x-filament::button></div>
+                    @endif
                 @elseif ($subscription['can_cancel'])
                     <p>{{ $subscription['in_trial'] ? 'Eine Kündigung während des Trials wird zum Trial-Ende wirksam.' : 'Eine Kündigung wird zum Ende der laufenden Monatsperiode wirksam.' }}</p>
                     <div><x-filament::button color="gray" wire:click="prepareCancellation({{ $subscription['id'] }})" wire:loading.attr="disabled" aria-haspopup="dialog">Testabo kündigen</x-filament::button></div>
@@ -37,6 +40,21 @@
             <div class="sd-settings-actions">
                 <x-filament::button color="danger" wire:click="confirmCancellation" wire:loading.attr="disabled">Kündigung jetzt bestätigen</x-filament::button>
                 <x-filament::button color="gray" x-on:click="$dispatch('close-modal', { id: 'cancel-subscription' })">Zurück</x-filament::button>
+            </div>
+        </x-slot>
+    </x-filament::modal>
+    <x-filament::modal id="reactivate-subscription" width="lg" :close-by-clicking-away="false">
+        <x-slot name="heading">{{ ($reactivation['ended'] ?? false) ? 'Abo reaktivieren' : 'Kündigung zurückziehen' }}</x-slot>
+        @if ($reactivation)
+            <p>Das Testabo für <strong>{{ $reactivation['station'] }}</strong> wird fortgesetzt.</p>
+            <p>Der bisherige Stationspreis und Monatsrhythmus bleiben erhalten. Es beginnt keine neue Testphase. Das Abo verlängert sich wieder bis zur nächsten Kündigung.</p>
+            <p>Im lokalen Testbetrieb entstehen weiterhin keine Rechnungen oder Bankeinzüge.</p>
+        @endif
+        @error('reactivation')<p role="alert" class="sd-field-error">{{ $message }}</p>@enderror
+        <x-slot name="footer">
+            <div class="sd-settings-actions">
+                <x-filament::button wire:click="confirmReactivation" wire:loading.attr="disabled">Fortsetzung jetzt bestätigen</x-filament::button>
+                <x-filament::button color="gray" x-on:click="$dispatch('close-modal', { id: 'reactivate-subscription' })">Zurück</x-filament::button>
             </div>
         </x-slot>
     </x-filament::modal>

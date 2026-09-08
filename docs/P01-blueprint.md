@@ -265,7 +265,8 @@ bestätigt: Eine Kündigung während des Trials wird erst zum Trial-Ende wirksam
 bleibt der Zugang bestehen. Danach erfolgt keine Verlängerung. Nach dem Trial wird zum
 Ende der laufenden Monatsperiode gekündigt. Echte Vertragsabschlüsse und Einzüge bleiben gesperrt.
 
-Die Owner-Seite /owner/subscriptions zeigt Station, gespeicherten Bruttopreis, Steuer,
+Die Owner-Einstellungen /owner/settings bündeln Darstellung und Abos in zwei Tabs.
+Der Abo-Tab (weiterhin auch unter /owner/subscriptions erreichbar) zeigt Station, gespeicherten Bruttopreis, Steuer,
 Trial-Ende, aktuelle Periode und Kündigungstermin. Ein eigener Modal-Dialog nennt Station
 und konkreten Endtermin vor der endgültigen Bestätigung. Gast, unbestätigte Owner,
 fremde Abo-IDs, nicht bereitgestellte Mandanten und echte Verträge sind für diese
@@ -276,16 +277,30 @@ Anzeige nach Europe/Berlin umgerechnet. Beginn inklusive, Ende exklusiv; ein zu 
 Monat kürzt nur seine eigene Grenze, ohne den ursprünglichen Monatstag zu verschieben.
 Die Periodenanzeige ist eine Simulation und erzeugt weder Forderungen noch Bankaufträge.
 
-Eine gesperrte Vertragszeile, eindeutiger Kündigungsdatensatz und gemeinsamer Audit-Commit
+Eine gesperrte Vertragszeile, getrennte Kündigungsnachweise und gemeinsamer Audit-Commit
 machen Wiederholungen idempotent. Ein zwischen Dialogöffnung und Bestätigung überholter
-Endtermin wird abgelehnt und muss neu bestätigt werden. Kündigungen werden nicht gelöscht
-oder nachträglich zurückgenommen; eine Rücknahmefunktion wurde noch nicht beauftragt.
+Endtermin wird abgelehnt und muss neu bestätigt werden. Beauftragt und lokal umgesetzt:
+Kündigung vor dem Ende zurückziehen und das Abo auch nach dem Ende reaktivieren.
+Jede Rücknahme referenziert genau einen unverändert erhaltenen Kündigungsvorgang;
+erneute Kündigungen erzeugen neue Nachweise. Veraltete Bestätigungen dürfen spätere
+Kündigungen nicht aufheben. Der Benutzer bestätigt die Fortsetzung in einem Modal.
+Die Reaktivierung bewahrt ausdrücklich den bisherigen Monatsrhythmus, Stationspreis
+und ursprünglichen Trial. Es gibt keinen neuen Trial und keinen neu gesetzten Monatsanker.
+Der aktuelle Zeitraum wird auch nach einer mehrmonatigen Pause vom ursprünglichen Anker
+abgeleitet. Die finanzielle Abwicklung bleibt im lokalen Testbetrieb ausgeschaltet.
 Das erreichte Ende wird aus dem gespeicherten Endtermin angezeigt. Die Kündigung löscht
 keine Stations-/Personaldaten. Exportfunktionen und produktive Zugriffsbeschränkungen nach
 Vertragsende bleiben Teil des noch offenen Export-/Aufbewahrungsablaufs.
 
 Geprüft werden Trial- und Monatskündigung, Monatsende/Schaltjahr, exakte Periodengrenzen,
 überholte Bestätigungen, Duplikate, Rollen, fremde Verträge und der vollständige Modalablauf.
+
+Persönliche Darstellung: Der angemeldete Owner kann Petrol, Aral-Blau, Esso-Rot,
+Shell-Gelb, bft-Weiß/Grau oder OIL!-Grün/Lila speichern. Die Auswahl liegt am Benutzer,
+nicht am Mandanten. Die an Markenfarben angelehnten Paletten sind fest vorgegeben;
+freies CSS wird nicht angenommen. Helle Seitenleisten erhalten dunkle Navigationstexte.
+Nach dem Speichern lädt das Panel die persönliche Palette neu. Die Plattformverwaltung
+behält ihre bestehende Darstellung. Weitere Mitarbeiter-Logins sind noch nicht implementiert.
 
 ### Bankenstamm und gewünschter IBAN-Generator
 

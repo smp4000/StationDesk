@@ -43,11 +43,11 @@ class ManageSubscriptions
     }
 
     /** Sperrt die Vertragszeile, prüft den angezeigten Termin erneut und schreibt Kündigung samt Audit genau einmal. */
-    public function cancel(int $id, string $expectedEnd): array
+    public function cancel(int $id, string $expectedEnd, int $expectedLastCancellationId = 0): array
     {
         $owner = $this->owner();
 
-        return DB::connection('central')->transaction(function () use ($owner, $id, $expectedEnd): array {
+        return DB::connection('central')->transaction(function () use ($owner, $id, $expectedEnd, $expectedLastCancellationId): array {
             $db = DB::connection('central');
             $subscription = $db->table('subscriptions')->where('tenant_id', $owner->tenant_id)->where('id', $id)->lockForUpdate()->first();
             abort_unless($subscription, 404);
@@ -56,7 +56,7 @@ class ManageSubscriptions
             if ($subscription->cancelled_at !== null) {
                 return $view;
             }
-            if ($view['cancellation_end'] !== $expectedEnd) {
+            if ($view['cancellation_end'] !== $expectedEnd || (int) $view['cancellation_id'] !== $expectedLastCancellationId) {
                 throw ValidationException::withMessages(['cancellation' => 'Die aktuelle Periode hat sich geändert. Bitte den Dialog schließen und den neuen Kündigungstermin prüfen.']);
             }
             $time = now();
@@ -76,7 +76,42 @@ class ManageSubscriptions
         });
     }
 
-    /** Verhindert echte Vertragskündigungen, bis der öffentliche Vertragsablauf implementiert und freigegeben ist. */
+    /** Reaktiviert genau den bestätigten Kündigungsvorgang; Preis, Trial und ursprünglicher Monatsanker bleiben bestehen. */
+    public function reactivate(int $id, int $expectedCancellationId): array
+    {
+        $owner = $this->owner();
+
+        return DB::connection('central')->transaction(function () use ($owner, $id, $expectedCancellationId): array {
+            $db = DB::connection('central');
+            $subscription = $db->table('subscriptions')->where('tenant_id', $owner->tenant_id)->where('id', $id)->lockForUpdate()->first();
+            abort_unless($subscription, 404);
+            $this->assertTestCancellationAllowed($subscription);
+            $latest = $db->table('subscription_cancellations')->where('subscription_id', $id)->orderByDesc('id')->first();
+            if (! $latest || (int) $latest->id !== $expectedCancellationId) {
+                throw ValidationException::withMessages(['reactivation' => 'Der Kündigungsstand hat sich geändert. Bitte den Dialog schließen und erneut öffnen.']);
+            }
+            if ($db->table('subscription_reactivations')->where('cancellation_id', $latest->id)->exists()) {
+                return $this->describe($subscription);
+            }
+            abort_unless($subscription->cancelled_at && $subscription->ends_at && in_array($subscription->status, ['trial', 'active'], true), 409);
+            $wasEnded = CarbonImmutable::now('UTC')->greaterThanOrEqualTo(CarbonImmutable::parse($subscription->ends_at, 'UTC'));
+            $time = now();
+            $db->table('subscription_reactivations')->insert([
+                'cancellation_id' => $latest->id, 'tenant_id' => $owner->tenant_id, 'reactivated_by' => $owner->id,
+                'reactivated_at' => $time, 'was_ended' => $wasEnded,
+            ]);
+            $db->table('subscriptions')->where('id', $id)->update(['cancelled_at' => null, 'ends_at' => null, 'updated_at' => $time]);
+            $db->table('audit_events')->insert([
+                'tenant_id' => $owner->tenant_id, 'actor_type' => 'owner', 'actor_id' => (string) $owner->id,
+                'action' => $wasEnded ? 'subscription.reactivated' : 'subscription.cancellation_withdrawn',
+                'subject_id' => (string) $id, 'occurred_at' => $time,
+            ]);
+
+            return $this->describe($db->table('subscriptions')->where('id', $id)->first());
+        });
+    }
+
+    /** Verhindert echte Vertragsänderungen, bis der öffentliche Vertragsablauf implementiert und freigegeben ist. */
     private function assertTestCancellationAllowed(object $subscription): void
     {
         abort_unless(app()->environment('local', 'testing') && $subscription->is_test_registration, 403);
@@ -107,6 +142,9 @@ class ManageSubscriptions
             'period_start' => $ended ? null : $period['start']->toDateTimeString(),
             'period_end' => $ended ? null : $period['end']->toDateTimeString(),
             'cancelled_at' => $subscription->cancelled_at, 'ends_at' => $subscription->ends_at,
+            'cancellation_id' => DB::connection('central')->table('subscription_cancellations')->where('subscription_id', $subscription->id)->max('id'),
+            'can_reactivate' => (bool) $subscription->cancelled_at && $subscription->is_test_registration
+                && app()->environment('local', 'testing') && in_array($subscription->status, ['trial', 'active'], true),
             'cancellation_end' => ($end ?? $period['end'])->toDateTimeString(),
             'can_cancel' => ! $subscription->cancelled_at && ! $ended && $subscription->is_test_registration
                 && app()->environment('local', 'testing') && in_array($subscription->status, ['trial', 'active'], true),

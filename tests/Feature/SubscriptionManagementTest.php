@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Billing\ManageSubscriptions;
 use App\Filament\Owner\Pages\Overview;
+use App\Filament\Owner\Pages\Settings;
 use App\Models\Owner;
 use App\Models\Tenant;
 use App\Tenancy\Provisioner;
@@ -126,6 +127,53 @@ class SubscriptionManagementTest extends TestCase
             $this->assertSame(404, $exception->getStatusCode());
         }
         $this->assertDatabaseMissing('subscription_cancellations', ['subscription_id' => $foreignId], 'central');
+        try {
+            app(ManageSubscriptions::class)->reactivate($foreignId, 1);
+            $this->fail('Fremdes Abo wurde reaktiviert.');
+        } catch (HttpException $exception) {
+            $this->assertSame(404, $exception->getStatusCode());
+        }
+    }
+
+    public function test_withdrawal_and_later_reactivation_preserve_rhythm_price_and_complete_history(): void
+    {
+        $owner = $this->owner();
+        $id = $this->subscription($owner);
+        $this->actingAs($owner, 'web');
+        $service = app(ManageSubscriptions::class);
+        $first = $service->cancel($id, $service->quote($id)['cancellation_end']);
+        $withdrawn = $service->reactivate($id, (int) $first['cancellation_id']);
+        $this->assertTrue($withdrawn['in_trial']);
+        $this->assertNull($withdrawn['cancelled_at']);
+        $service->reactivate($id, (int) $first['cancellation_id']);
+        $this->assertSame(1, DB::connection('central')->table('subscription_reactivations')->where('cancellation_id', $first['cancellation_id'])->count());
+        try {
+            $service->cancel($id, $first['cancellation_end']);
+            $this->fail('Alter Kündigungsdialog wurde nach der Rücknahme angenommen.');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('cancellation', $exception->errors());
+        }
+        $second = $service->cancel($id, $withdrawn['cancellation_end'], (int) $withdrawn['cancellation_id']);
+        try {
+            $service->reactivate($id, (int) $first['cancellation_id']);
+            $this->fail('Alte Rücknahme hat eine neue Kündigung aufgehoben.');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('reactivation', $exception->errors());
+        }
+        $this->travelTo(Carbon::parse('2027-01-17 15:00:00', 'UTC'));
+        $this->assertTrue($service->quote($id)['ended']);
+        $resumed = $service->reactivate($id, (int) $second['cancellation_id']);
+        $this->assertFalse($resumed['ended']);
+        $this->assertFalse($resumed['in_trial']);
+        $this->assertSame('2027-01-01 12:00:00', $resumed['period_start']);
+        $this->assertSame('2027-02-01 12:00:00', $resumed['period_end']);
+        $this->assertDatabaseHas('subscriptions', ['id' => $id, 'gross_cents' => 100, 'billing_anchor_at' => '2026-10-01 12:00:00', 'trial_ends_at' => '2026-10-01 12:00:00', 'cancelled_at' => null, 'ends_at' => null], 'central');
+        $this->assertSame(2, DB::connection('central')->table('subscription_cancellations')->where('subscription_id', $id)->count());
+        $this->assertDatabaseHas('subscription_reactivations', ['cancellation_id' => $first['cancellation_id'], 'was_ended' => false, 'reactivated_by' => $owner->id], 'central');
+        $this->assertDatabaseHas('subscription_reactivations', ['cancellation_id' => $second['cancellation_id'], 'was_ended' => true, 'reactivated_by' => $owner->id], 'central');
+        foreach (['subscription.reactivated', 'subscription.cancellation_withdrawn'] as $action) {
+            $this->assertDatabaseHas('audit_events', ['subject_id' => (string) $id, 'action' => $action], 'central');
+        }
     }
 
     public function test_real_contract_and_production_environment_cannot_be_cancelled(): void
@@ -141,6 +189,12 @@ class SubscriptionManagementTest extends TestCase
             try {
                 app(ManageSubscriptions::class)->cancel($id, '2026-10-01 12:00:00');
                 $this->fail('Nicht freigegebene Kündigung angenommen.');
+            } catch (HttpException $exception) {
+                $this->assertSame(403, $exception->getStatusCode());
+            }
+            try {
+                app(ManageSubscriptions::class)->reactivate($id, 1);
+                $this->fail('Nicht freigegebene Reaktivierung angenommen.');
             } catch (HttpException $exception) {
                 $this->assertSame(403, $exception->getStatusCode());
             }
@@ -188,12 +242,26 @@ class SubscriptionManagementTest extends TestCase
         $this->assertStringContainsString('Abo-Teststation', $prepared->json('components.0.effects.html'));
         $this->assertNull(DB::connection('central')->table('subscriptions')->where('id', $id)->value('cancelled_at'));
         $this->assertFalse(tenancy()->initialized);
-        $this->postJson(Livewire::getUpdateUri(), ['components' => [[
+        $confirmed = $this->postJson(Livewire::getUpdateUri(), ['components' => [[
             'snapshot' => $prepared->json('components.0.snapshot'), 'updates' => [],
             'calls' => [['path' => '', 'method' => 'confirmCancellation', 'params' => []]],
         ]]], ['X-Livewire' => 'true'])->assertOk();
         $this->assertFalse(tenancy()->initialized);
         $this->assertDatabaseHas('subscription_cancellations', ['subscription_id' => $id, 'requested_by' => $owner->id], 'central');
+        $preparedReactivation = $this->postJson(Livewire::getUpdateUri(), ['components' => [[
+            'snapshot' => $confirmed->json('components.0.snapshot'), 'updates' => [],
+            'calls' => [['path' => '', 'method' => 'prepareReactivation', 'params' => [$id]]],
+        ]]], ['X-Livewire' => 'true'])->assertOk();
+        $this->assertNotNull(DB::connection('central')->table('subscriptions')->where('id', $id)->value('cancelled_at'));
+        $this->postJson(Livewire::getUpdateUri(), ['components' => [[
+            'snapshot' => $preparedReactivation->json('components.0.snapshot'), 'updates' => [],
+            'calls' => [['path' => '', 'method' => 'confirmReactivation', 'params' => []]],
+        ]]], ['X-Livewire' => 'true'])->assertOk();
+        $this->assertNull(DB::connection('central')->table('subscriptions')->where('id', $id)->value('cancelled_at'));
+        $this->assertFalse(tenancy()->initialized);
+        Livewire::test(Settings::class)->set('colorScheme', 'oil')->call('saveAppearance')
+            ->assertRedirect(Settings::getUrl().'?tab=appearance');
+        $this->get('/owner/settings?tab=appearance')->assertOk()->assertSee('--sd-sidebar: #681f79', false);
         $other = $this->owner();
         app(TenantContext::class)->forOwner($owner, function () use ($other): void {
             try {

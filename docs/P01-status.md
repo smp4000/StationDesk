@@ -21,9 +21,13 @@ Stand: 09.09.2026. P01 ist in Arbeit, nicht abgeschlossen und nicht für Produkt
 - Fehlgeschlagene Bereitstellung mit bereinigten Fehlercodes und administrativem Retry.
 - Owner-Stationsübersicht, eigene Anmeldeseiten und eigenes responsives Theme.
 - Brutto-/Nettoberechnung mit Centbeträgen und 19 Prozent Umsatzsteuer.
-- Owner-Seite /owner/subscriptions: gespeicherter Stationspreis, Trial-Ende, simulierte Monatsperiode und Kündigungstermin.
+- Owner-Einstellungen /owner/settings mit Tabs Darstellung und Abos & Laufzeiten; /owner/subscriptions bleibt direkt erreichbar.
+- Persönliche Farbauswahl am Owner: Petrol, Aral-Blau, Esso-Rot, Shell-Gelb, bft-Weiß/Grau und OIL!-Grün/Lila; feste Paletten mit eigener Speicherung und Audit.
+- Aboübersicht: gespeicherter Stationspreis, Trial-Ende, simulierte Monatsperiode und Kündigungstermin.
 - Lokale Testkündigung mit Modal-Bestätigung, erneut geprüftem Endtermin, Zeilensperre, eindeutigem Kündigungsnachweis und zentralem Audit.
 - Trial-Kündigung zum Trial-Ende; danach Kündigung zum Ende der laufenden Monatsperiode. Keine Datenlöschung durch Kündigung.
+- Rücknahme vor dem Vertragsende und Reaktivierung danach mit expliziter Modal-Bestätigung; ursprünglicher Monatsrhythmus, Preis und Trial bleiben erhalten.
+- Mehrere Kündigungs-/Rücknahmezyklen mit unveränderten Nachweisen, idempotenter Wiederholung und Ablehnung veralteter Dialoge.
 - Interaktiver CLI-Befehl stationdeck:create-super-admin mit verdeckter Passworteingabe.
 - Plattform-Einstellungen unter /admin/platform-settings: Abrechnung, Gläubiger, E-Mail und FinTS.
 - Unveränderliche Preis-/Frist- und Gläubigerfassungen; Konflikterkennung bei parallelem Bearbeiten.
@@ -36,13 +40,17 @@ Stand: 09.09.2026. P01 ist in Arbeit, nicht abgeschlossen und nicht für Produkt
 
 ## Nachgewiesene Prüfungen
 
-84 projektspezifische Tests mit 424 Assertions bestanden auf MySQL 8.4.9.
+87 projektspezifische Tests mit 462 Assertions bestanden auf MySQL 8.4.9.
+Die persönlichen Farben werden auf getrennten Benutzerkonten geprüft, einschließlich
+gespeicherter Auswahl nach erneuter Anfrage und Ablehnung beliebiger CSS-Werte.
+Rücknahme und Reaktivierung bewahren auch nach einer mehrmonatigen Pause den Monatsanker;
+erneute Kündigungen, alte Bestätigungen, Fremdzugriffe und Produktionssperren sind geprüft.
 Der Abo-Dialog wird inzwischen über echte getrennte HTTP-/Livewire-Anfragen geprüft.
 Die persistente Middleware beendet ihren Kontext vor der Aktion; Stationsabfragen in
 Aktionen und Rendern verwenden deshalb zusätzlich begrenzte, frisch autorisierte
 Owner-Kontexte. Ein bereits bestehender fremder Kontext wird abgewiesen. Der frühere
 Dialogtest mit dauerhaft offenem Testkontext wurde ersetzt, weil er diesen Fehler verdeckte.
-Neun zusätzliche Abo-/Periodentests prüfen Monatsanker einschließlich Schaltjahr,
+Abo-/Periodentests prüfen Monatsanker einschließlich Schaltjahr,
 Trial-Kündigung, Monatskündigung, unveränderte Endtermine bei Wiederholung, überholte
 Dialogbestätigung, fremde Verträge, Produktionssperre und den echten Livewire-Modalablauf.
 Sechs zusätzliche Wiederherstellungstests prüfen Owner-/Admin-Trennung, Reset-Anfrage,
