@@ -261,7 +261,7 @@ class SubscriptionManagementTest extends TestCase
         $this->assertFalse(tenancy()->initialized);
         Livewire::test(Settings::class)->set('colorScheme', 'oil')->call('saveAppearance')
             ->assertRedirect(Settings::getUrl().'?tab=appearance');
-        $this->get('/owner/settings?tab=appearance')->assertOk()->assertSee('--sd-sidebar: #681f79', false);
+        $this->get('/owner/settings?tab=appearance')->assertOk()->assertSee('--sd-sidebar: #00914c', false);
         $other = $this->owner();
         app(TenantContext::class)->forOwner($owner, function () use ($other): void {
             try {

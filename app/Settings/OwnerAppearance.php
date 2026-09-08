@@ -9,16 +9,16 @@ use Illuminate\Validation\ValidationException;
 /** Persönliche, fest definierte Farbauswahl; niemals freies CSS oder fremde Benutzerreferenzen übernehmen. */
 class OwnerAppearance
 {
-    /** An Markenfarben angelehnte Paletten mit angepassten Kontrasten für die Anwendungsoberfläche. */
+    /** Website-Farben aus den offiziellen Stylesheets; Quellen und Zuordnung stehen im P01-Blueprint. */
     public static function schemes(): array
     {
         return [
             'petrol' => ['name' => 'StationDeck · Petrol', 'sidebar' => '#133e3d', 'nav' => '#dbe9e0', 'active' => '#225751', 'primary' => '#147568', 'accent' => '#147568', 'canvas' => '#f4f5ef', 'soft' => '#e4ece0', 'ink' => '#143c3d'],
-            'aral' => ['name' => 'Aral · Blau', 'sidebar' => '#0064cc', 'nav' => '#ffffff', 'active' => '#00458d', 'primary' => '#0064cc', 'accent' => '#0064cc', 'canvas' => '#f3f6fb', 'soft' => '#e5effc', 'ink' => '#14345b'],
-            'esso' => ['name' => 'Esso · Rot', 'sidebar' => '#c8102e', 'nav' => '#ffffff', 'active' => '#920b22', 'primary' => '#c8102e', 'accent' => '#c8102e', 'canvas' => '#faf5f5', 'soft' => '#fbe7eb', 'ink' => '#491b25'],
-            'shell' => ['name' => 'Shell · Gelb', 'sidebar' => '#ffd500', 'nav' => '#292929', 'active' => '#e8bb00', 'primary' => '#806000', 'accent' => '#ffd500', 'canvas' => '#faf9f3', 'soft' => '#fff4c2', 'ink' => '#443600'],
-            'bft' => ['name' => 'bft · Weiß / Grau', 'sidebar' => '#f1f2f3', 'nav' => '#30343b', 'active' => '#d7dce1', 'primary' => '#4b5563', 'accent' => '#9ca3af', 'canvas' => '#f7f8fa', 'soft' => '#eceff2', 'ink' => '#30343b'],
-            'oil' => ['name' => 'OIL! · Grün / Lila', 'sidebar' => '#681f79', 'nav' => '#ffffff', 'active' => '#4d1759', 'primary' => '#007840', 'accent' => '#00914c', 'canvas' => '#f5f7f4', 'soft' => '#e6f2e9', 'ink' => '#542162'],
+            'aral' => ['name' => 'Aral · Blau', 'sidebar' => '#0064cc', 'nav' => '#ffffff', 'active' => '#032b5a', 'primary' => '#0064cc', 'accent' => '#0064cc', 'canvas' => '#f7f7f7', 'soft' => '#e9e9e9', 'ink' => '#252530', 'muted' => '#666666', 'line' => '#eaeaea', 'button_text' => '#ffffff', 'hover' => '#032b5a', 'hover_text' => '#ffffff'],
+            'esso' => ['name' => 'Esso · Rot', 'sidebar' => '#dc241f', 'nav' => '#ffffff', 'active' => '#0e469b', 'primary' => '#dc241f', 'accent' => '#0e469b', 'canvas' => '#fafafa', 'soft' => '#f0f0f0', 'ink' => '#2b2626', 'muted' => '#606060', 'line' => '#d4d4d4', 'button_text' => '#ffffff', 'hover' => '#0e469b', 'hover_text' => '#ffffff'],
+            'shell' => ['name' => 'Shell · Gelb', 'sidebar' => '#ffc800', 'nav' => '#4a4a4a', 'active' => '#4a4a4a', 'active_nav' => '#ffffff', 'primary' => '#ffc800', 'accent' => '#ffc800', 'canvas' => '#ffffff', 'soft' => '#f5f5f5', 'ink' => '#4a4a4a', 'muted' => '#4a4a4a', 'line' => '#d4d4d4', 'button_text' => '#4a4a4a', 'hover' => '#4a4a4a', 'hover_text' => '#ffffff'],
+            'bft' => ['name' => 'bft · Weiß / Grau', 'sidebar' => '#ffffff', 'nav' => '#35354b', 'active' => '#35354b', 'active_nav' => '#ffffff', 'primary' => '#35354b', 'accent' => '#484866', 'canvas' => '#ffffff', 'soft' => '#ffffff', 'ink' => '#35354b', 'muted' => '#484866', 'line' => '#c7c7cd', 'button_text' => '#ffffff', 'hover' => '#484866', 'hover_text' => '#ffffff'],
+            'oil' => ['name' => 'OIL! · Grün / Lila', 'sidebar' => '#00914c', 'nav' => '#000000', 'active' => '#681f79', 'active_nav' => '#ffffff', 'primary' => '#681f79', 'accent' => '#00914c', 'canvas' => '#ffffff', 'soft' => '#ededed', 'ink' => '#681f79', 'muted' => '#505050', 'line' => '#bfbfbf', 'button_text' => '#ffffff', 'hover' => '#00914c', 'hover_text' => '#000000'],
         ];
     }
 

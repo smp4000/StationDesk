@@ -23,6 +23,7 @@ Stand: 09.09.2026. P01 ist in Arbeit, nicht abgeschlossen und nicht für Produkt
 - Brutto-/Nettoberechnung mit Centbeträgen und 19 Prozent Umsatzsteuer.
 - Owner-Einstellungen /owner/settings mit Tabs Darstellung und Abos & Laufzeiten; /owner/subscriptions bleibt direkt erreichbar.
 - Persönliche Farbauswahl am Owner: Petrol, Aral-Blau, Esso-Rot, Shell-Gelb, bft-Weiß/Grau und OIL!-Grün/Lila; feste Paletten mit eigener Speicherung und Audit.
+- Markenpaletten mit offiziellen Website-Farben abgeglichen; Schaltflächen verwenden Originalwerte statt automatisch veränderter Filament-Abstufungen. Quellen im Blueprint.
 - Aboübersicht: gespeicherter Stationspreis, Trial-Ende, simulierte Monatsperiode und Kündigungstermin.
 - Lokale Testkündigung mit Modal-Bestätigung, erneut geprüftem Endtermin, Zeilensperre, eindeutigem Kündigungsnachweis und zentralem Audit.
 - Trial-Kündigung zum Trial-Ende; danach Kündigung zum Ende der laufenden Monatsperiode. Keine Datenlöschung durch Kündigung.
@@ -43,6 +44,10 @@ Stand: 09.09.2026. P01 ist in Arbeit, nicht abgeschlossen und nicht für Produkt
 87 projektspezifische Tests mit 462 Assertions bestanden auf MySQL 8.4.9.
 Die persönlichen Farben werden auf getrennten Benutzerkonten geprüft, einschließlich
 gespeicherter Auswahl nach erneuter Anfrage und Ablehnung beliebiger CSS-Werte.
+Nach dem Website-Farbabgleich bestanden die neun betroffenen Featuretests mit 71 Assertions
+und der Vite-Build. Eine lokale Vorschau mit fiktiven Inhalten, dem echten Theme und echten
+Filament-Schaltflächen bestätigt die berechneten Farbwerte aller fünf Markenpaletten;
+Shell und OIL! wurden zusätzlich per Browser-Screenshot auf Lesbarkeit geprüft.
 Rücknahme und Reaktivierung bewahren auch nach einer mehrmonatigen Pause den Monatsanker;
 erneute Kündigungen, alte Bestätigungen, Fremdzugriffe und Produktionssperren sind geprüft.
 Der Abo-Dialog wird inzwischen über echte getrennte HTTP-/Livewire-Anfragen geprüft.

@@ -302,6 +302,18 @@ freies CSS wird nicht angenommen. Helle Seitenleisten erhalten dunkle Navigation
 Nach dem Speichern lädt das Panel die persönliche Palette neu. Die Plattformverwaltung
 behält ihre bestehende Darstellung. Weitere Mitarbeiter-Logins sind noch nicht implementiert.
 
+Farbabgleich mit den offiziellen Websites am 09.09.2026:
+- Aral: `#0064cc`, dunkler Akzent `#032b5a`, Text `#252530`, neutrale Flächen `#f7f7f7`/`#e9e9e9` aus [Arals Stylesheet](https://www.aral.de/apps/settings/wcm/designs/refresh/aral/assets.css).
+- Esso: Rot `#dc241f` und Blau `#0e469b`, Text `#2b2626`, Grau `#f0f0f0` aus [Essos Stylesheet](https://www.esso.de/assets/minified/css/common-blue.min.css). Die Website verwendet blaue Aktionsschaltflächen und rote Navigationsakzente; die App bewahrt den gewünschten Schwerpunkt Rot.
+- Shell: das tatsächlich dargestellte Aktionsgelb `#ffc800` und Textgrau `#4a4a4a` aus den berechneten Stilen von [shell.de](https://www.shell.de/) (`--color-brand1-bg: 47,100%,50%`). Gelbe Schaltflächen erhalten dunkle Schrift statt der bisherigen braunen Ersatzfarbe.
+- bft: Weiß `#ffffff`, Text-/Grautöne `#35354b` und `#484866` aus [bfts Stylesheet](https://www.bft.de/assets/css/main.scss-8eecb183.css). Der ausdrücklich gewünschte Weiß/Grau-Schwerpunkt bleibt bestehen; das ebenfalls auf der Verbandswebsite vorkommende Orange wird nicht zur Hauptfarbe.
+- OIL!: Grün `#00914c`, Lila `#681f79`, Flächengrau `#ededed`, Text `#505050` aus [OIL!s Stylesheet](https://www.oil-tankstellen.de/typo3conf/ext/oil/Resources/Public/Css/main.css). Grün und Lila werden als sichtbares Farbpaar verwendet.
+
+Die Übertragung auf die App ist eine eigene Oberflächengestaltung, keine Übernahme der
+Markenwebsites. Primäre Schaltflächen nutzen die ermittelten Werte direkt, weil Filaments
+automatische OKLCH-Abstufungen Helligkeit und Sättigung verändern. Aktive Navigation und
+helle Schaltflächen haben getrennte Schriftfarben. Quellen werden nicht zur Laufzeit geladen.
+
 ### Bankenstamm und gewünschter IBAN-Generator
 
 Beauftragt sind Bundesbank-CSV-Import, Bankzuordnung und darauf aufbauende IBAN-Ermittlung.

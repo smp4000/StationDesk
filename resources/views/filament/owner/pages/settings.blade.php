@@ -15,7 +15,7 @@
                             <span class="sd-palette-title">{{ $scheme['name'] }}</span>
                             <span class="sd-palette-preview" aria-hidden="true" style="background:{{ $scheme['canvas'] }}">
                                 <span style="background:{{ $scheme['sidebar'] }};color:{{ $scheme['nav'] }}">S<span style="background:{{ $scheme['active'] }};height:8px;width:22px;display:block;margin-top:12px"></span></span>
-                                <span><span style="display:block;background:{{ $scheme['soft'] }};color:{{ $scheme['ink'] }};padding:8px;border-radius:5px">Dein Betrieb</span><span style="display:inline-block;background:{{ $scheme['primary'] }};color:#fff;padding:5px 12px;margin-top:10px;border-radius:4px">Speichern</span></span>
+                                <span><span style="display:block;background:{{ $scheme['soft'] }};color:{{ $scheme['ink'] }};padding:8px;border-radius:5px">Dein Betrieb</span><span style="display:inline-block;background:{{ $scheme['primary'] }};color:{{ $scheme['button_text'] ?? '#ffffff' }};padding:5px 12px;margin-top:10px;border-radius:4px">Speichern</span></span>
                             </span>
                         </label>
                     @endforeach
