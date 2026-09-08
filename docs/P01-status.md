@@ -11,6 +11,11 @@ Stand: 08.09.2026. P01 ist in Arbeit, nicht abgeschlossen und nicht für Produkt
 - Tenant-Kontext, Cache-/Dateitrennung und Bereinigung auch bei Initialisierungsfehlern.
 - Zentraler Queue-Auftrag nach E-Mail-Bestätigungsereignis.
 - Wiederholbare Anlage von erster Station, Chef, Stationszuordnung und 30-Tage-Trial.
+- Lokale Registrierung unter /owner/register mit Chef, Firmen-/Rechnungsanschrift und erster Tankstelle.
+- Atomare Registrierung mit intern erzeugten Mandanten-/Stations-IDs und Preis-Snapshot; keine Bereitstellung vor E-Mail-Bestätigung.
+- Bestätigungsmail und begrenzter Neuversand über das gespeicherte Plattform-SMTP-Profil; sichere Fehleranzeige bei Versandproblemen.
+- Dauerhafte Testkennzeichnung in Registrierungsauftrag und Abo; lokale Registrierungen sind keine kostenpflichtigen Vertragsabschlüsse.
+- Automatisch aktualisierte Bereitstellungsseite, eigener Fehlerzustand und Trial-Ende in der Stationsübersicht.
 - Fehlgeschlagene Bereitstellung mit bereinigten Fehlercodes und administrativem Retry.
 - Owner-Stationsübersicht, eigene Anmeldeseiten und eigenes responsives Theme.
 - Brutto-/Nettoberechnung mit Centbeträgen und 19 Prozent Umsatzsteuer.
@@ -26,11 +31,16 @@ Stand: 08.09.2026. P01 ist in Arbeit, nicht abgeschlossen und nicht für Produkt
 
 ## Nachgewiesene Prüfungen
 
-55 projektspezifische Tests mit 232 Assertions bestanden auf MySQL 8.4.9.
+69 projektspezifische Tests mit 332 Assertions bestanden auf MySQL 8.4.9.
 Geprüft wurden Daten-/Cache-/Dateitrennung, direkte Fremd-SQL-Abfragen, fehlende DDL-Rechte
 des Tenant-Nutzers, wiederverwendete Models nach Kontextwechsel, Bootstrapfehler,
 Trial-Idempotenz, Worker-Retries, E-Mail-Bestätigung, Guard-Trennung, TOTP-Einrichtung,
 Panelzugriff und Cent-Rundung. Vite-Produktionsbuild erfolgreich.
+Die Registrierung wurde zusätzlich im lokalen Browser geöffnet und auf vollständige Formularbereiche geprüft.
+Elf Registrierungstests prüfen unter anderem manipulierte/fremde/abgelaufene Bestätigungslinks,
+E-Mail-Eindeutigkeit, Preis-Snapshot, Produktionssperre, SMTP-Ausfall und den Ablauf bis zur
+provisionierten ersten Station samt Chef und stabilem Trial. SMTP-Versand wurde dabei mit
+einem Speichertransport geprüft; keine echte Bestätigungsmail wurde durch diese Tests versendet.
 Startseite und Owner-Anmeldung wurden zusätzlich im Browser visuell geprüft;
 die Anmeldung auch bei 390 Pixel Breite. Für die Fachpanels fehlen noch Browserprüfungen
 mit vollständig eingerichteten echten Pilotkonten.
@@ -224,7 +234,8 @@ Nur starten, wenn Port 3307 noch nicht belegt ist. Es wurde kein Windows-Autosta
 Das vorhandene Start-Batch prüft pauschal auf mysqld.exe und überspringt MySQL 8 bei laufendem XAMPP.
 
 Startseite: /. Owner: /owner/login. Plattform: /admin/login.
-Die Startseite bezeichnet die Registrierung ausdrücklich als noch nicht geöffnet.
+Die Startseite verlinkt lokal auf die Testregistrierung. Außerhalb von local/testing bleiben
+Registrierungsroute und Formularaktionen gesperrt, bis Vertrags- und Mandatstexte eingebunden sind.
 Eine Start-/Login-Vorschau ist mit dem lokalen file-Sessiontreiber ohne DB-Zugang möglich.
 
 ~~~powershell

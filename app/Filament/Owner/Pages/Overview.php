@@ -4,6 +4,7 @@ namespace App\Filament\Owner\Pages;
 
 use App\Models\Station;
 use Filament\Pages\Page;
+use Illuminate\Support\Facades\DB;
 
 /** Stationsübersicht im verpflichtend initialisierten Mandantenkontext. */
 class Overview extends Page
@@ -19,6 +20,9 @@ class Overview extends Page
     /** Liefert ausschließlich tatsächlich vorhandene Stationen aus der aktiven Datenbank. */
     protected function getViewData(): array
     {
-        return ['stations' => Station::query()->orderBy('name')->get()];
+        return [
+            'stations' => Station::query()->orderBy('name')->get(),
+            'subscriptions' => DB::connection('central')->table('subscriptions')->where('tenant_id', tenant()->getTenantKey())->get()->keyBy('station_id'),
+        ];
     }
 }

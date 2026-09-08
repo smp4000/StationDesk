@@ -93,6 +93,7 @@ class Provisioner
                     'tenant_id' => $tenant->id, 'station_id' => $registration->station_id, 'status' => 'trial',
                     'gross_cents' => $registration->gross_cents, 'tax_basis_points' => $registration->tax_basis_points,
                     'currency' => 'EUR', 'trial_started_at' => $start, 'trial_ends_at' => $end, 'billing_anchor_at' => $end,
+                    'is_test_registration' => $registration->is_test_registration,
                     'created_at' => $start, 'updated_at' => $start,
                 ]);
                 $central->table('registration_requests')->where('id', $registration->id)->update(['completed_at' => $start]);

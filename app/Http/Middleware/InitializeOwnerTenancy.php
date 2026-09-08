@@ -23,8 +23,9 @@ class InitializeOwnerTenancy
         if (! $owner->hasVerifiedEmail()) {
             return redirect()->route('filament.owner.auth.email-verification.prompt');
         }
-        if ($owner->tenant()->value('provisioning_status') !== 'ready') {
-            return response()->view('onboarding-pending', [], 202);
+        $status = $owner->tenant()->value('provisioning_status');
+        if ($status !== 'ready') {
+            return response()->view('onboarding-pending', ['status' => $status], 202);
         }
 
         return app(TenantContext::class)->forOwner($owner, fn () => $next($request));

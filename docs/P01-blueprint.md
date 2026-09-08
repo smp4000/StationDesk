@@ -35,6 +35,9 @@ Arbeitsname aus der Vorlage: StationDeck. Arbeitsverzeichnis: StationDesk.
 - Audit-Aufteilung wurde an die Umsetzung delegiert: Plattformaktionen zentral, Kundenaktionen im Mandantenschema.
 - Englische technische Bezeichner, deutsche fachliche Kommentare und UI-Texte; relationale Daten in 3NF.
 - Erst P01 abschließen und prüfen, danach weitere Phasen.
+- Ergänzend freigegeben: den technischen Registrierungsablauf zunächst vollständig lokal testen;
+  öffentliche Registrierung bis zur Einbindung von AGB, Datenschutzerklärung, AVV und Mandatstext sperren.
+  Lokale Aufträge und Abos bleiben dauerhaft als Tests erkennbar und begründen keinen zahlungspflichtigen Vertrag.
 
 ## 2. Ziel und Grenze dieser Phase
 

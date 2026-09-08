@@ -2,7 +2,10 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Owner\Auth\Register;
+use App\Filament\Owner\Auth\VerifyEmailPrompt;
 use App\Http\Middleware\InitializeOwnerTenancy;
+use App\Onboarding\RegisterOwner;
 use Filament\FontProviders\LocalFontProvider;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -29,8 +32,9 @@ class OwnerPanelProvider extends PanelProvider
             ->id('owner')
             ->path('owner')
             ->login()
+            ->registration(RegisterOwner::available() ? Register::class : null)
             ->passwordReset()
-            ->emailVerification()
+            ->emailVerification(VerifyEmailPrompt::class)
             ->authGuard('web')
             ->authPasswordBroker('owners')
             ->brandName('StationDeck')

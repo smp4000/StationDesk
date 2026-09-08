@@ -8,7 +8,11 @@
         @forelse ($stations as $station)
             <article class="sd-station-row">
                 <div class="sd-station-icon" aria-hidden="true">S</div>
-                <div><h3>{{ $station->name }}</h3><p>{{ $station->street }} · {{ $station->postal_code }} {{ $station->city }}</p></div>
+                <div><h3>{{ $station->name }}</h3><p>{{ $station->street }} · {{ $station->postal_code }} {{ $station->city }}</p>
+                    @php($subscription = $subscriptions->get($station->id))
+                    @if ($subscription?->trial_ends_at)<p>Testphase bis {{ \Carbon\Carbon::parse($subscription->trial_ends_at)->timezone('Europe/Berlin')->format('d.m.Y H:i') }} Uhr</p>@endif
+                    @if ($subscription?->is_test_registration)<p>Lokales Testkonto · keine echte Abrechnung</p>@endif
+                </div>
                 <span class="sd-badge">{{ ['trial' => 'Testphase', 'active' => 'Aktiv', 'payment_overdue' => 'Zahlung offen', 'cancelled' => 'Gekündigt', 'archived' => 'Archiviert'][$station->lifecycle_status] ?? $station->lifecycle_status }}</span>
             </article>
         @empty
