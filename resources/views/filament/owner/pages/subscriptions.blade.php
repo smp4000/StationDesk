@@ -1,4 +1,4 @@
-<x-filament-panels::page>
+<div class="sd-settings">
     @php($date = fn ($value) => \Carbon\CarbonImmutable::parse($value, 'UTC')->timezone('Europe/Berlin')->format('d.m.Y · H:i').' Uhr')
     <section class="sd-intro"><div><span class="sd-eyebrow">DEINE STATIONSABOS</span><h2>Preis und Laufzeit. Klar im Blick.</h2><p>Jede Tankstelle hat ihr eigenes Abo. Hier siehst du die gespeicherten Konditionen und den nächsten Endtermin.</p></div></section>
     @forelse ($subscriptions as $subscription)
@@ -40,4 +40,4 @@
             </div>
         </x-slot>
     </x-filament::modal>
-</x-filament-panels::page>
+</div>

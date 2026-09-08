@@ -175,7 +175,7 @@ class SubscriptionManagementTest extends TestCase
         app(Provisioner::class)->provision($tenant->id);
         $this->actingAs($owner, 'web');
         $id = DB::connection('central')->table('subscriptions')->where('tenant_id', $tenant->id)->value('id');
-        $html = $this->get('/owner/subscriptions')->assertOk()->getContent();
+        $html = $this->get('/owner/settings')->assertOk()->assertSee('Kunden-Einstellungen')->getContent();
         preg_match_all('/wire:snapshot="([^"]+)"/', $html, $matches);
         $snapshot = collect($matches[1])->map(fn ($encoded) => html_entity_decode($encoded, ENT_QUOTES))
             ->first(fn ($json) => array_key_exists('cancellation', json_decode($json, true)['data']));
