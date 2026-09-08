@@ -24,7 +24,7 @@ Stand: 08.09.2026. P01 ist in Arbeit, nicht abgeschlossen und nicht für Produkt
 
 ## Nachgewiesene Prüfungen
 
-37 projektspezifische Tests mit 127 Assertions bestanden auf MySQL 8.4.9.
+50 projektspezifische Tests mit 208 Assertions bestanden auf MySQL 8.4.9.
 Geprüft wurden Daten-/Cache-/Dateitrennung, direkte Fremd-SQL-Abfragen, fehlende DDL-Rechte
 des Tenant-Nutzers, wiederverwendete Models nach Kontextwechsel, Bootstrapfehler,
 Trial-Idempotenz, Worker-Retries, E-Mail-Bestätigung, Guard-Trennung, TOTP-Einrichtung,
@@ -104,11 +104,32 @@ Pro Admin ist ein Versuch alle 30 Sekunden möglich. 17 Einstellungstests mit 79
 bestehen, einschließlich drei neuer Prüfungen für Erreichbarkeitsanzeige, interne Zieladressen,
 fehlende Konfiguration und erneute Autorisierung. HTTP-Aufrufe sind dabei simuliert.
 
-Zusätzlich beauftragt: reine Kontenabfrage mit SecureGo-plus-Freigabe. Die Bank bestimmt,
-ob sie für den konkreten Lesevorgang eine Freigabe verlangt. nemiah/php-fints 4.1.0 wurde
-per Composer-Dry-Run auf Kompatibilität geprüft: ein neues Paket, keine weiteren Updates.
-Die in AGENTS.md erforderliche Freigabe dieser Abhängigkeit ist angefragt und steht aus.
-Noch keine Bibliothek installiert, keine PIN erfasst und kein Bankdialog ausgeführt.
+Die reine Kontenabfrage ist nach ausdrücklicher Freigabe mit nemiah/php-fints 4.1.0
+implementiert. Composer ergänzte ausschließlich dieses Paket; keine anderen Paketupdates.
+Der Super-Admin gibt VR-NetKey/Alias und PIN im Testformular ein. Angeboten werden nur die
+von der Bank gemeldeten entkoppelten Handy-Verfahren und gegebenenfalls Freigabegeräte.
+Anmeldung und Kontenabfrage können jeweils eine Handy-Bestätigung verlangen; die Bank
+entscheidet darüber. Die Anwendung erzwingt keine künstliche TAN-Anforderung.
+Manuelle Statusprüfung berücksichtigt Bankintervalle und maximale Prüfversuche.
+Die einzige fachliche Aktion ist GetSEPAAccounts; keine Salden, Umsätze oder Zahlungen.
+Ergebnisse zeigen ausschließlich maskierte Kontoreferenzen.
+
+PIN, VR-NetKey, Konfigurationssnapshot und Paketdialog werden authentifiziert verschlüsselt
+im zentralen Cache gespeichert, gebunden an Admin und Anwendungssitzung. Zehn Minuten
+absolute Fortsetzungsfrist, einmaliger Verbrauch jedes Dialogstands und exklusive Sperre.
+Ein Fehler führt nicht zur automatischen Wiederverwendung eines unklaren Bankdialogs.
+Abschluss, Fehler und explizites Beenden entfernen den lokalen Zustand; nicht mehr abgefragte
+abgelaufene Cachezeilen können bis zur Cachebereinigung verschlüsselt in der Datenbank liegen.
+Beim Seitenneuladen kann ein alter Test ausdrücklich beendet werden. Eine bereits angezeigte
+Freigabe in SecureGo plus wird dadurch nicht bankseitig widerrufen.
+PIN und VR-NetKey werden vor jeder Formularantwort geleert und nicht als Einstellungen gespeichert.
+Audit enthält nur den technischen Schritt, niemals Challenges, Konten oder Zugangsdaten.
+
+Sechs zusätzliche Tests prüfen verschlüsselten Zustand, Browser-Geheimnisschutz, Abschluss,
+Sessionbindung, veraltete Zustände, Bankwartezeiten, Fehlerbereinigung, Verfahrensfilterung,
+erneute Persistierung und den erfolgreichen Kontenabruf ohne unnötige Freigabeaufforderung.
+Die Bankadapter sind simuliert; echter Banklogin und SecureGo-plus-Freigabe stehen als
+Pilotprüfung mit den persönlich eingegebenen Zugangsdaten aus.
 
 ## Lokale Verwendung
 

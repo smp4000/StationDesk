@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a6f887da21ccbd04c8f760a58c55110e",
+    "content-hash": "e6d6559e942c384bb8b2fa8d342d3a0f",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -3474,6 +3474,54 @@
                 }
             ],
             "time": "2026-09-02T12:39:56+00:00"
+        },
+        {
+            "name": "nemiah/php-fints",
+            "version": "4.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/nemiah/phpFinTS.git",
+                "reference": "845c8cc973310c11ae2441e88e118c505d1b59f1"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/nemiah/phpFinTS/zipball/845c8cc973310c11ae2441e88e118c505d1b59f1",
+                "reference": "845c8cc973310c11ae2441e88e118c505d1b59f1",
+                "shasum": ""
+            },
+            "require": {
+                "ext-curl": "*",
+                "ext-mbstring": "*",
+                "php": ">=8.0",
+                "psr/log": "^1|^2|^3"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^3.0",
+                "php-mock/php-mock-phpunit": "^2.6",
+                "phpunit/phpunit": "^9.5"
+            },
+            "suggest": {
+                "abcaeffchen/sephpa": "1.*",
+                "monolog/monolog": "Allow sending log messages to a variety of different handlers",
+                "nemiah/php-sepa-xml": "dev-master"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Fhp\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "PHP Library for the protocols fints and hbci",
+            "homepage": "https://github.com/nemiah/phpFinTS",
+            "support": {
+                "issues": "https://github.com/nemiah/phpFinTS/issues",
+                "source": "https://github.com/nemiah/phpFinTS/tree/4.1"
+            },
+            "time": "2026-05-10T19:07:56+00:00"
         },
         {
             "name": "nesbot/carbon",

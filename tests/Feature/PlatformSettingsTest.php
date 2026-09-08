@@ -5,11 +5,19 @@ namespace Tests\Feature;
 use App\Filament\Pages\PlatformSettings;
 use App\Models\Owner;
 use App\Models\SuperAdmin;
+use App\Settings\FintsReadOnlyAdapter;
+use App\Settings\FintsReadOnlyTest;
 use App\Settings\PlatformSettingsStore;
 use App\Settings\SendPlatformTestMail;
+use Fhp\Action\GetSEPAAccounts;
+use Fhp\FinTs;
+use Fhp\Model\SEPAAccount;
+use Fhp\Model\TanMode;
+use Fhp\Protocol\DialogInitialization;
 use Filament\Facades\Filament;
 use Illuminate\Mail\MailManager;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -141,6 +149,135 @@ class PlatformSettingsTest extends TestCase
     {
         $this->admin();
         Livewire::test(PlatformSettings::class)->call('save', 'super_admins')->assertNotFound();
+    }
+
+    /** Freigegebener Endpunkt, jedoch stets durch einen simulierten Bankadapter ohne Netzwerk ersetzt. */
+    private function bankFixture(): void
+    {
+        app(PlatformSettingsStore::class)->save('fints', ['bank_name' => 'Testbank', 'bank_code' => '12345678',
+            'endpoint' => 'https://fints2.atruvia.de/cgi-bin/hbciservlet', 'product_id' => 'test-product'], 0);
+    }
+
+    public function test_bank_credentials_are_hidden_encrypted_and_deleted_after_completion(): void
+    {
+        $admin = $this->admin();
+        $this->bankFixture();
+        $adapter = Mockery::mock(FintsReadOnlyAdapter::class);
+        $adapter->shouldReceive('advance')->once()->withArgs(fn (array $state, string $choice): bool => $state['phase'] === 'start' && $state['pin'] === 'Private-test-PIN')
+            ->andReturnUsing(fn (array $state): array => array_replace($state, ['phase' => 'mode', 'options' => ['900' => 'SecureGo plus'], 'client' => 'private-dialog']));
+        $adapter->shouldReceive('advance')->once()->withArgs(fn (array $state, string $choice): bool => $state['phase'] === 'mode' && $choice === '900')
+            ->andReturn(['phase' => 'done', 'accounts' => ['•••• 1234']]);
+        $this->app->instance(FintsReadOnlyAdapter::class, $adapter);
+        $page = Livewire::test(PlatformSettings::class)->set('bankLogin', 'test-netkey')->set('bankPin', 'Private-test-PIN')->call('startBankTest')
+            ->assertHasNoErrors()->assertSet('bankPin', '')->assertSet('bankLogin', '')->assertDontSee('Private-test-PIN')->assertDontSee('private-dialog');
+        $key = 'fints-read-test:'.$admin->id.':'.hash('sha256', session()->getId());
+        $ciphertext = Cache::store('database')->get($key);
+        $this->assertStringNotContainsString('Private-test-PIN', $ciphertext);
+        $this->assertSame('Private-test-PIN', Crypt::decrypt($ciphertext)['pin']);
+        $page->set('bankChoice', '900')->call('continueBankTest')->assertHasNoErrors()->assertSee('Kontenabfrage erfolgreich');
+        $this->assertNull(Cache::store('database')->get($key));
+        $this->assertStringNotContainsString('Private-test-PIN', json_encode(DB::connection('central')->table('audit_events')->get()));
+    }
+
+    public function test_bank_wait_interval_replay_and_session_binding(): void
+    {
+        $this->admin();
+        $this->bankFixture();
+        $adapter = Mockery::mock(FintsReadOnlyAdapter::class);
+        $adapter->shouldReceive('advance')->once()->andReturnUsing(fn (array $state): array => array_replace($state, [
+            'phase' => 'waiting', 'checks' => 0, 'max_checks' => 2, 'next_check' => time() + 30, 'challenge' => 'Bestätigen',
+        ]));
+        $this->app->instance(FintsReadOnlyAdapter::class, $adapter);
+        $service = app(FintsReadOnlyTest::class);
+        $state = $service->start('test', 'pin');
+        foreach (['wrong-token', $state['token']] as $token) {
+            try {
+                $service->advance($token);
+                $this->fail('Ungültiger oder zu früher Dialogschritt muss abgewiesen werden.');
+            } catch (ValidationException) {
+                $this->addToAssertionCount(1);
+            }
+        }
+        $sessionId = session()->getId();
+        session()->setId(str_repeat('b', 40));
+        try {
+            $service->advance($state['token']);
+            $this->fail('Andere Sitzung darf den Dialog nicht fortsetzen.');
+        } catch (ValidationException) {
+            $this->addToAssertionCount(1);
+        } finally {
+            session()->setId($sessionId);
+            $service->cancel();
+        }
+    }
+
+    public function test_bank_errors_do_not_expose_credentials_and_clear_state(): void
+    {
+        $this->admin();
+        $this->bankFixture();
+        $adapter = Mockery::mock(FintsReadOnlyAdapter::class);
+        $adapter->shouldReceive('advance')->once()->andThrow(new RuntimeException('Private-test-PIN protocol trace'));
+        $this->app->instance(FintsReadOnlyAdapter::class, $adapter);
+        Livewire::test(PlatformSettings::class)->set('bankLogin', 'test')->set('bankPin', 'Private-test-PIN')->call('startBankTest')
+            ->assertHasErrors('bankTest')->assertSet('bankPin', '')->assertDontSee('Private-test-PIN');
+    }
+
+    public function test_bank_adapter_filters_out_non_phone_methods(): void
+    {
+        $phone = Mockery::mock(TanMode::class);
+        $phone->shouldReceive('isDecoupled')->andReturn(true);
+        $phone->shouldReceive('isProzessvariante2')->andReturn(true);
+        $phone->shouldReceive('getId')->andReturn(900);
+        $phone->shouldReceive('getName')->andReturn('SecureGo plus');
+        $chip = Mockery::mock(TanMode::class);
+        $chip->shouldReceive('isDecoupled')->andReturn(false);
+        $client = Mockery::mock(FinTs::class);
+        $client->shouldReceive('getTanModes')->once()->andReturn([900 => $phone, 901 => $chip]);
+        $client->shouldReceive('persist')->once()->andReturn('private-state');
+        $adapter = Mockery::mock(FintsReadOnlyAdapter::class)->makePartial()->shouldAllowMockingProtectedMethods();
+        $adapter->shouldReceive('client')->once()->andReturn($client);
+        $state = $adapter->advance(['phase' => 'start']);
+        $this->assertSame([900 => 'SecureGo plus'], $state['options']);
+        $this->assertSame('mode', $state['phase']);
+    }
+
+    public function test_bank_adapter_repersists_after_unconfirmed_phone_check(): void
+    {
+        $mode = Mockery::mock(TanMode::class);
+        $mode->shouldReceive('getPeriodicDecoupledCheckDelaySeconds')->andReturn(5);
+        $client = Mockery::mock(FinTs::class);
+        $client->shouldReceive('checkDecoupledSubmission')->once()->andReturn(false);
+        $client->shouldReceive('getSelectedTanMode')->andReturn($mode);
+        $client->shouldReceive('persist')->once()->andReturn('updated-private-state');
+        $adapter = Mockery::mock(FintsReadOnlyAdapter::class)->makePartial()->shouldAllowMockingProtectedMethods();
+        $adapter->shouldReceive('client')->once()->andReturn($client);
+        $state = $adapter->advance(['phase' => 'waiting', 'step' => 'accounts', 'checks' => 0, 'action' => serialize(GetSEPAAccounts::create())]);
+        $this->assertSame(1, $state['checks']);
+        $this->assertSame('updated-private-state', $state['client']);
+        $this->assertGreaterThanOrEqual(time() + 4, $state['next_check']);
+    }
+
+    public function test_bank_adapter_reads_only_accounts_and_masks_them_when_bank_needs_no_challenge(): void
+    {
+        $mode = Mockery::mock(TanMode::class);
+        $mode->shouldReceive('isDecoupled')->andReturn(true);
+        $mode->shouldReceive('needsTanMedium')->andReturn(false);
+        $login = Mockery::mock(DialogInitialization::class);
+        $login->shouldReceive('needsTan')->once()->andReturn(false);
+        $accounts = Mockery::mock(GetSEPAAccounts::class);
+        $accounts->shouldReceive('needsTan')->once()->andReturn(false);
+        $accounts->shouldReceive('getAccounts')->once()->andReturn([(new SEPAAccount)->setIban('DE89370400440532013000')]);
+        $client = Mockery::mock(FinTs::class);
+        $client->shouldReceive('getTanModes')->andReturn([900 => $mode]);
+        $client->shouldReceive('selectTanMode')->once()->with($mode);
+        $client->shouldReceive('login')->once()->andReturn($login);
+        $client->shouldReceive('execute')->once()->with($accounts);
+        $client->shouldReceive('close')->once();
+        $adapter = Mockery::mock(FintsReadOnlyAdapter::class)->makePartial()->shouldAllowMockingProtectedMethods();
+        $adapter->shouldReceive('client')->once()->andReturn($client);
+        $adapter->shouldReceive('accountsAction')->once()->andReturn($accounts);
+        $result = $adapter->advance(['phase' => 'mode', 'options' => [900 => 'SecureGo plus']], '900');
+        $this->assertSame(['phase' => 'done', 'accounts' => ['•••• 3000']], $result);
     }
 
     public function test_fints_connection_reports_http_without_claiming_bank_login(): void

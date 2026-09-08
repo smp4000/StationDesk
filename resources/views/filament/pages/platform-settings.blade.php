@@ -19,7 +19,7 @@
                 'password' => ['SMTP-Passwort', 'password', 'Bei Änderung neu eingeben. Leer lassen, um das gespeicherte Passwort zu behalten.'],
                 'from_address' => ['Absender-E-Mail', 'email'], 'from_name' => ['Absendername', 'text'],
             ]],
-            'fints' => ['title' => 'FinTS', 'description' => 'Verbindungsparameter vorbereiten. Bankdialog, SecureGo-plus-Freigabe und Lastschrifteinreichung sind noch nicht angebunden.', 'fields' => [
+            'fints' => ['title' => 'FinTS', 'description' => 'Verbindungsparameter und reine Kontenabfrage mit Handy-Freigabe testen. Lastschrifteinreichung ist noch nicht angebunden.', 'fields' => [
                 'bank_name' => ['Bankname', 'text'], 'bank_code' => ['Bankleitzahl', 'text', 'Acht Ziffern.'],
                 'endpoint' => ['FinTS-Endpunkt', 'url', 'HTTPS-Adresse aus den Bankunterlagen.'],
                 'product_id' => ['Eigene Produktregistrierungsnummer', 'text'],
@@ -100,6 +100,37 @@
                         <div class="sd-settings-actions"><x-filament::button type="button" wire:click="testFintsConnection" wire:loading.attr="disabled">Verbindung testen</x-filament::button></div>
                         @error('fintsTest') <p role="alert" class="sd-field-error">{{ $message }}</p> @enderror
                         @if ($fintsConnectionResult) <p role="status">{{ $fintsConnectionResult }}</p> @endif
+                    </div>
+                    <div class="sd-settings-form" aria-labelledby="bank-test-title">
+                        <h3 id="bank-test-title">Kontenabfrage mit Handy-Freigabe</h3>
+                        <p>Fragt ausschließlich die Kontenliste ab. Ob eine Bestätigung in SecureGo plus erforderlich ist, entscheidet die Bank. Es werden keine Zahlungen ausgelöst.</p>
+                        @error('bankTest') <p role="alert" class="sd-field-error">{{ $message }}</p> @enderror
+                        @if (empty($bankState))
+                            <form wire:submit="startBankTest" class="sd-settings-grid">
+                                <div class="sd-settings-field"><label for="bank-login">VR-NetKey / Alias</label><input id="bank-login" wire:model="bankLogin" autocomplete="off" required maxlength="100">@error('bankLogin') <span role="alert" class="sd-field-error">{{ $message }}</span> @enderror</div>
+                                <div class="sd-settings-field"><label for="bank-pin">Onlinebanking-PIN</label><input id="bank-pin" type="password" wire:model="bankPin" autocomplete="new-password" required maxlength="100">@error('bankPin') <span role="alert" class="sd-field-error">{{ $message }}</span> @enderror</div>
+                                <p class="sd-settings-note">Die Zugangsdaten werden nur für diesen Test verschlüsselt zwischengespeichert. Er ist höchstens zehn Minuten fortsetzbar. Bitte zuvor die Bankparameter speichern.</p>
+                                <div><x-filament::button type="submit" wire:loading.attr="disabled">Banktest starten</x-filament::button></div>
+                            </form>
+                            <x-filament::button type="button" color="gray" wire:click="cancelBankTest" wire:loading.attr="disabled">Alten Test nach Seitenneuladen beenden</x-filament::button>
+                        @elseif (in_array($bankState['phase'], ['mode', 'medium']))
+                            <form wire:submit="continueBankTest" class="sd-settings-grid">
+                                <div class="sd-settings-field"><label for="bank-choice">{{ $bankState['phase'] === 'mode' ? 'Handy-Verfahren auswählen' : 'Freigabegerät auswählen' }}</label>
+                                    <select id="bank-choice" wire:model="bankChoice" required><option value="">Bitte auswählen</option>@foreach ($bankState['options'] as $value => $label)<option value="{{ $value }}">{{ $label }}</option>@endforeach</select>
+                                </div>
+                                <div><x-filament::button type="submit" wire:loading.attr="disabled">Auswahl bestätigen und abfragen</x-filament::button></div>
+                            </form>
+                        @elseif ($bankState['phase'] === 'waiting')
+                            <p role="status">Bitte die Abfrage auf deinem Handy bestätigen.</p>
+                            <p>{{ $bankState['challenge'] }}</p>
+                            <p>Nach der Bestätigung hier prüfen. Die von der Bank vorgegebenen Wartezeiten werden eingehalten.</p>
+                            <div><x-filament::button type="button" wire:click="continueBankTest" wire:loading.attr="disabled">Freigabestatus prüfen</x-filament::button></div>
+                        @elseif ($bankState['phase'] === 'done')
+                            <p role="status">Kontenabfrage erfolgreich. {{ count($bankState['accounts']) }} Konten gefunden.</p>
+                            <ul>@foreach ($bankState['accounts'] as $account)<li>{{ $account }}</li>@endforeach</ul>
+                        @endif
+                        @if (! empty($bankState))<div><x-filament::button type="button" color="gray" wire:click="cancelBankTest" wire:loading.attr="disabled">Test beenden</x-filament::button></div>@endif
+                        <p wire:loading wire:target="startBankTest,continueBankTest" role="status">Bankantwort wird abgewartet …</p>
                     </div>
                 @endif
                 @if (! empty($history[$group]))

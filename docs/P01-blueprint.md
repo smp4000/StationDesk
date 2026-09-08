@@ -268,6 +268,13 @@ Beide Bereiche erhalten unveränderliche Versionen mit Akteur und Zeitpunkt.
 SMTP enthält Server, Port, TLS-Verfahren, Benutzer, Passwort und Absender. FinTS enthält
 Bankname, Bankleitzahl, HTTPS-Endpunkt und eigene Produktnummer. PIN/TAN und Bankdialoge
 folgen mit dem Adapter nach Klärung der offenen Bankparameter.
+
+Fortgeschriebener Stand: Die ausdrücklich beauftragte Konten-Leseabfrage verwendet nach
+Freigabe nemiah/php-fints 4.1.0. VR-NetKey/PIN werden nur im kurzlebigen, verschlüsselten
+Testdialog benötigt. Bankseitige Handy-Freigabe wird unterstützt, falls die Bank sie fordert.
+Der Testdialog ist an Admin und Sitzung gebunden, zehn Minuten fortsetzbar und gegen
+parallele Verwendung desselben Zustands geschützt. Ergebnis nur maskierte Kontoreferenzen.
+Lastschrifteinreichung und Kontoumsatzabruf gehören weiterhin zu den offenen Integrationen.
 SMTP und FinTS sind aktuelle Konfigurationen mit Änderungszähler; alte SMTP-Passwörter
 werden nicht historisiert. Geheimnisse und IBAN werden verschlüsselt gespeichert;
 leere Geheimnisfelder beim Bearbeiten behalten bestehende Werte. Audit enthält nur

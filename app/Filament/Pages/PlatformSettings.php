@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Models\SuperAdmin;
+use App\Settings\FintsReadOnlyTest;
 use App\Settings\PlatformSettingsStore;
 use App\Settings\SendPlatformTestMail;
 use App\Settings\TestFintsConnection;
@@ -24,6 +25,15 @@ class PlatformSettings extends Page
     public array $data = [];
 
     public string $testRecipient = '';
+
+    public string $bankLogin = '';
+
+    public string $bankPin = '';
+
+    public string $bankChoice = '';
+
+    #[Locked]
+    public array $bankState = [];
 
     #[Locked]
     public string $fintsConnectionResult = '';
@@ -109,6 +119,56 @@ class PlatformSettings extends Page
             $this->addError('fintsTest', $exception->errors()['fintsTest'][0]);
         } catch (RuntimeException) {
             $this->addError('fintsTest', 'HTTPS-Verbindung nicht bestätigt. Bitte Netzwerk, Bankadresse und Zertifikatsprüfung kontrollieren.');
+        }
+    }
+
+    /** Entfernt Zugangseingaben vor jeder Antwort aus dem Livewire-Zustand. */
+    public function startBankTest(): void
+    {
+        app(PlatformSettingsStore::class)->authorize();
+        $login = $this->bankLogin;
+        $pin = $this->bankPin;
+        $this->bankLogin = $this->bankPin = '';
+        $this->resetValidation();
+        try {
+            $this->bankState = app(FintsReadOnlyTest::class)->start($login, $pin);
+            $this->bankChoice = '';
+        } catch (ValidationException $exception) {
+            foreach ($exception->errors() as $field => $messages) {
+                $this->addError($field === 'fintsTest' ? 'bankTest' : $field, $messages[0]);
+            }
+        } catch (RuntimeException) {
+            $this->bankState = [];
+            $this->addError('bankTest', 'Bankabfrage fehlgeschlagen. Bitte Zugangsdaten, FinTS-Freischaltung, Produktnummer und Handy-Verfahren prüfen. Kein automatischer Wiederholungsversuch.');
+        }
+    }
+
+    /** Führt Auswahl oder manuelle Freigabeprüfung anhand des serverseitigen Dialogzustands fort. */
+    public function continueBankTest(): void
+    {
+        app(PlatformSettingsStore::class)->authorize();
+        $this->resetValidation('bankTest');
+        try {
+            $this->bankState = app(FintsReadOnlyTest::class)->advance($this->bankState['token'] ?? '', $this->bankChoice);
+            $this->bankChoice = '';
+        } catch (ValidationException $exception) {
+            $this->addError('bankTest', $exception->errors()['bankTest'][0]);
+        } catch (RuntimeException) {
+            $this->bankState = [];
+            $this->addError('bankTest', 'Die Bankabfrage konnte nicht abgeschlossen werden. Bitte den Status in SecureGo plus prüfen und bei Bedarf neu starten.');
+        }
+    }
+
+    /** Verwirft lokale Zugangsdaten und Dialogfortsetzung ausdrücklich auf Benutzerwunsch. */
+    public function cancelBankTest(): void
+    {
+        try {
+            app(FintsReadOnlyTest::class)->cancel();
+            $this->bankState = [];
+            $this->bankPin = $this->bankLogin = $this->bankChoice = '';
+            $this->resetValidation();
+        } catch (ValidationException $exception) {
+            $this->addError('bankTest', $exception->errors()['bankTest'][0]);
         }
     }
 
