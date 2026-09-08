@@ -15,10 +15,14 @@ Stand: 08.09.2026. P01 ist in Arbeit, nicht abgeschlossen und nicht für Produkt
 - Owner-Stationsübersicht, eigene Anmeldeseiten und eigenes responsives Theme.
 - Brutto-/Nettoberechnung mit Centbeträgen und 19 Prozent Umsatzsteuer.
 - Interaktiver CLI-Befehl stationdeck:create-super-admin mit verdeckter Passworteingabe.
+- Plattform-Einstellungen unter /admin/platform-settings: Abrechnung, Gläubiger, E-Mail und FinTS.
+- Unveränderliche Preis-/Frist- und Gläubigerfassungen; Konflikterkennung bei parallelem Bearbeiten.
+- Verschlüsselte Gläubiger-IBAN und SMTP-Passwörter, ohne Rückgabe gespeicherter Geheimnisse im Formular.
+- Aktuelle SMTP-/FinTS-Konfiguration mit Änderungszähler und zentralem Audit ohne Geheimniswerte.
 
 ## Nachgewiesene Prüfungen
 
-24 projektspezifische Tests mit 76 Assertions bestanden auf MySQL 8.4.9.
+37 projektspezifische Tests mit 127 Assertions bestanden auf MySQL 8.4.9.
 Geprüft wurden Daten-/Cache-/Dateitrennung, direkte Fremd-SQL-Abfragen, fehlende DDL-Rechte
 des Tenant-Nutzers, wiederverwendete Models nach Kontextwechsel, Bootstrapfehler,
 Trial-Idempotenz, Worker-Retries, E-Mail-Bestätigung, Guard-Trennung, TOTP-Einrichtung,
@@ -35,7 +39,8 @@ Die vorhandene XAMPP/MariaDB-Instanz auf Port 3306 wurde nicht verändert.
 
 Inzwischen fachlich bestätigt, aber noch nicht implementiert:
 
-- Zwei Kalendertage SEPA-Vorabankündigung, im Super-Admin einstellbar.
+- Zwei Kalendertage SEPA-Vorabankündigung sind als einstellbarer Ausgangswert verfügbar;
+  ihre Anwendung im Ankündigungs-/Einzugsablauf ist noch umzusetzen.
 - Bei Zahlungsverzug erst warnen und nach 30 Tagen Änderungen sperren; Lesen,
   Export und Zahlungsverwaltung bleiben möglich.
 - Sechs Monate Exportzugriff nach wirksamem Vertragsende. Das datenbezogene
@@ -45,7 +50,8 @@ Weiterhin umzusetzen:
 
 - Öffentliches Registrierungsformular mit vollständiger Firmen-/Rechnungsanschrift,
   verbindlicher Vertrags- und Mandatsannahme sowie tatsächlichem Bestätigungsversand.
-- Super-Admin-Einstellungen für Gläubiger, SMTP, FinTS und versionierte Preise.
+- Anbindung der gespeicherten Einstellungen an Registrierung, Vertragsannahme, SMTP-Versand
+  und FinTS-Adapter. Die Einstellungsseite löst keine Netzwerkaktionen aus.
 - Modulkatalog und automatisierte Upgrades bereits bereitgestellter Mandanten.
 - Periodische Abrechnung, Kündigung, Belege und SEPA-Vorabankündigungen.
 - FinTS-Einreichung, SecureGo-Freigabe, Umsatzabgleich und Rücklastschriften.
@@ -56,6 +62,26 @@ Weiterhin umzusetzen:
 FinTS-Vorgabe: VR Bank Fulda, SecureGo plus, eigene Produktregistrierungsnummer vorhanden.
 Die Nummer und Bankzugangsdaten sind noch nicht in der Anwendung hinterlegt.
 Keine Bankzugriffe, Zahlungsaufträge oder echten E-Mails wurden ausgeführt.
+
+## Plattform-Einstellungen
+
+Die vier Tabs speichern unabhängig und behalten ungespeicherte Eingaben beim Wechsel.
+Bruttopreise werden als Dezimaltext eingegeben und ohne Fließkommarechnung in Cent gespeichert.
+19 % Steuer sind festgelegt; neue Fassungen überschreiben keine vorhandenen Vertragsdatensätze.
+Vorabankündigungsfristen sind zwischen 1 und 365 Kalendertagen eingebbar. Diese technische
+Eingabegrenze ersetzt keine Vereinbarung mit dem Zahler.
+Gläubigerangaben werden versioniert; die IBAN wird anhand Form und Modulo-97-Prüfsumme
+plausibilisiert. Bankseitige Freigabe und vollständige länderspezifische Prüfungen stehen aus.
+SMTP unterstützt STARTTLS/SMTPS als Konfigurationsauswahl. FinTS verlangt einen HTTPS-Endpunkt
+ohne eingebettete Benutzer-/Passwortangaben; PIN/TAN werden hier nicht gespeichert.
+Gespeicherte IBAN und SMTP-Passwort bleiben im Formular leer; leere Eingabe erhält den Wert.
+Änderungen benötigen Admin-Guard und eingerichtete TOTP. Versionskonflikte werden sichtbar
+zurückgewiesen, ein explizites Neuladen verwirft nur den jeweiligen Bereich.
+
+Die zusätzliche lokale Migration ist ausgeführt. Zehn neue MySQL-/Livewire-Tests mit
+43 Assertions prüfen Zugriff, erneute Schreibautorisierung, Validierung, verschlüsselte
+Speicherung, Geheimniserhalt, Historie und Konflikte. Vite-Build und Blade-Kompilierung bestehen.
+Die authentifizierte visuelle Browserprüfung der vier Tabs steht noch aus.
 
 ## Lokale Verwendung
 

@@ -255,6 +255,27 @@ Diese Quellen ersetzen keine Bestätigung der konkreten Bankvereinbarung oder re
 
 ## 12. Fortsetzung
 
+### Aktueller Umsetzungsschritt: Plattform-Einstellungen
+
+Die bestätigten Einstellungsbereiche werden unter /admin/platform-settings mit vier
+einzeln speicherbaren Tabs umgesetzt. Ausschließlich authentifizierte Super-Admins mit
+eingerichteter TOTP dürfen laden und speichern; Owner, Gäste und manipulierte Bereichsnamen
+werden abgewiesen. Fehler stehen am Feld, Speicherbestätigung und Versionskonflikte sichtbar.
+Abrechnung enthält den monatlichen Stationsbruttopreis (Startwert 1 EUR, 19 % Steuer) und
+die Vorabankündigungsfrist (Startwert zwei Kalendertage). Neue Preisversionen ändern keine
+bestehenden Vertragswerte. Gläubiger: Firma, Anschrift, Gläubiger-ID, Kontoinhaber, IBAN, BIC.
+Beide Bereiche erhalten unveränderliche Versionen mit Akteur und Zeitpunkt.
+SMTP enthält Server, Port, TLS-Verfahren, Benutzer, Passwort und Absender. FinTS enthält
+Bankname, Bankleitzahl, HTTPS-Endpunkt und eigene Produktnummer. PIN/TAN und Bankdialoge
+folgen mit dem Adapter nach Klärung der offenen Bankparameter.
+SMTP und FinTS sind aktuelle Konfigurationen mit Änderungszähler; alte SMTP-Passwörter
+werden nicht historisiert. Geheimnisse und IBAN werden verschlüsselt gespeichert;
+leere Geheimnisfelder beim Bearbeiten behalten bestehende Werte. Audit enthält nur
+Bereich und Datensatzreferenz. Gleichzeitige Bearbeitungen führen zu einem sichtbaren
+Konflikt statt unbemerktem Überschreiben. Keine Netzwerkaktionen beim Speichern.
+Tests: Rollen-/MFA-Sperren, Validierung, Verschlüsselung, Geheimniserhalt, Historie,
+unveränderte Vertragswerte und konkurrierende Änderungen auf isoliertem MySQL.
+
 Der aktuelle implementierte Umfang und die expliziten Lücken stehen in P01-status.md.
 FinTS ersetzt den ursprünglich vorgesehenen manuellen Upload als Hauptweg. Frühere
 XML-Exportdetails dieses Blueprints sind damit nur noch Format-/Nachvollziehbarkeitsanforderungen,
