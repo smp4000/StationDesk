@@ -6,12 +6,15 @@ use App\Filament\Pages\PlatformSettings;
 use App\Models\Owner;
 use App\Models\SuperAdmin;
 use App\Settings\PlatformSettingsStore;
+use App\Settings\SendPlatformTestMail;
 use Filament\Facades\Filament;
+use Illuminate\Mail\MailManager;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
+use Mockery;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -137,6 +140,74 @@ class PlatformSettingsTest extends TestCase
     {
         $this->admin();
         Livewire::test(PlatformSettings::class)->call('save', 'super_admins')->assertNotFound();
+    }
+
+    /** Ausschließlich fiktive SMTP-Werte, die Tests ersetzen jeden tatsächlichen Transport. */
+    private function smtpFixture(): void
+    {
+        app(PlatformSettingsStore::class)->save('smtp', [
+            'host' => 'smtp.example.test', 'port' => 587, 'encryption' => 'starttls',
+            'username' => 'test', 'password' => 'Synthetic-secret',
+            'from_address' => 'sender@example.test', 'from_name' => 'Testsender',
+        ], 0);
+    }
+
+    public function test_testmail_uses_saved_settings_and_rejects_immediate_repeat(): void
+    {
+        $this->admin();
+        $this->smtpFixture();
+        $mailer = app(MailManager::class)->build(['transport' => 'array']);
+        $manager = Mockery::mock(MailManager::class);
+        $manager->shouldReceive('build')->once()->withArgs(function (array $config): bool {
+            return $config['host'] === 'smtp.example.test' && $config['password'] === 'Synthetic-secret'
+                && $config['scheme'] === 'smtp' && $config['require_tls'] === true && $config['timeout'] === 15;
+        })->andReturn($mailer);
+        $this->app->instance(MailManager::class, $manager);
+        $page = Livewire::test(PlatformSettings::class)->set('data.smtp.host', 'unsaved.example.test')
+            ->set('testRecipient', 'recipient@example.test')->call('sendTestMail')->assertHasNoErrors();
+        $messages = $mailer->getSymfonyTransport()->messages();
+        $this->assertCount(1, $messages);
+        $message = $messages->first()->getOriginalMessage();
+        $this->assertSame('recipient@example.test', $message->getTo()[0]->getAddress());
+        $this->assertSame('sender@example.test', $message->getFrom()[0]->getAddress());
+        $page->call('sendTestMail')->assertHasErrors('testRecipient');
+        $this->assertSame(1, DB::connection('central')->table('audit_events')->where('action', 'platform_smtp.test_accepted')->count());
+    }
+
+    public function test_testmail_requires_saved_settings_and_valid_recipient(): void
+    {
+        $this->admin();
+        $manager = Mockery::mock(MailManager::class);
+        $manager->shouldNotReceive('build');
+        $this->app->instance(MailManager::class, $manager);
+        Livewire::test(PlatformSettings::class)->set('testRecipient', 'invalid')->call('sendTestMail')->assertHasErrors('testRecipient')
+            ->set('testRecipient', 'recipient@example.test')->call('sendTestMail')->assertHasErrors('testRecipient');
+    }
+
+    public function test_smtp_failure_does_not_expose_transport_secrets(): void
+    {
+        $this->admin();
+        $this->smtpFixture();
+        $manager = Mockery::mock(MailManager::class);
+        $manager->shouldReceive('build')->once()->andThrow(new RuntimeException('Synthetic-secret SMTP debug'));
+        $this->app->instance(MailManager::class, $manager);
+        try {
+            app(SendPlatformTestMail::class)->send('recipient@example.test');
+            $this->fail('Fehler muss gemeldet werden.');
+        } catch (RuntimeException $exception) {
+            $this->assertStringNotContainsString('Synthetic-secret', $exception->getMessage());
+            $this->assertNull($exception->getPrevious());
+        }
+        $this->assertSame(1, DB::connection('central')->table('audit_events')->where('action', 'platform_smtp.test_failed')->count());
+        $this->assertStringNotContainsString('Synthetic-secret', json_encode(DB::connection('central')->table('audit_events')->get()));
+    }
+
+    public function test_testmail_rechecks_admin_after_mount(): void
+    {
+        $this->admin();
+        $page = Livewire::test(PlatformSettings::class)->set('testRecipient', 'recipient@example.test');
+        auth('admin')->logout();
+        $page->call('sendTestMail')->assertForbidden();
     }
 
     public function test_write_action_rechecks_authentication_after_mount(): void

@@ -4,10 +4,12 @@ namespace App\Filament\Pages;
 
 use App\Models\SuperAdmin;
 use App\Settings\PlatformSettingsStore;
+use App\Settings\SendPlatformTestMail;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Locked;
+use RuntimeException;
 
 /** Vier unabhängig speicherbare Plattformbereiche; Geheimnisse bleiben nach dem Laden leer. */
 class PlatformSettings extends Page
@@ -19,6 +21,8 @@ class PlatformSettings extends Page
     protected static ?string $navigationLabel = 'Einstellungen';
 
     public array $data = [];
+
+    public string $testRecipient = '';
 
     #[Locked]
     public array $revisions = [];
@@ -67,6 +71,25 @@ class PlatformSettings extends Page
     {
         $this->loadGroup($group);
         $this->resetValidation();
+    }
+
+    /** Sendet nur auf ausdrücklichen Button-Klick mit den gespeicherten SMTP-Einstellungen. */
+    public function sendTestMail(): void
+    {
+        app(PlatformSettingsStore::class)->authorize();
+        $this->resetValidation('testRecipient');
+        try {
+            app(SendPlatformTestMail::class)->send($this->testRecipient);
+        } catch (ValidationException $exception) {
+            $this->addError('testRecipient', $exception->errors()['testRecipient'][0]);
+
+            return;
+        } catch (RuntimeException) {
+            Notification::make()->title('Testmail nicht bestätigt')->body('Bitte Server, Port, TLS und Zugangsdaten prüfen. Bei einem Verbindungsabbruch kann die Mail bereits angenommen worden sein.')->danger()->send();
+
+            return;
+        }
+        Notification::make()->title('Testmail vom SMTP-Server angenommen')->body('Bitte Posteingang und Spamordner prüfen. Die Annahme bestätigt noch keine Zustellung.')->success()->send();
     }
 
     /** Liefert nur öffentliche Historienmetadaten für die versionierten Bereiche. */

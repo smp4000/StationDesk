@@ -13,7 +13,7 @@
                 'iban' => ['IBAN', 'password', 'Bei Änderung vollständig eingeben. Leer lassen, um die gespeicherte IBAN zu behalten.'],
                 'bic' => ['BIC (optional)', 'text'],
             ]],
-            'smtp' => ['title' => 'E-Mail', 'description' => 'Plattform-Absender für künftige Bestätigungen und Vorabankündigungen. Der Versand ist noch nicht angebunden.', 'fields' => [
+            'smtp' => ['title' => 'E-Mail', 'description' => 'Plattform-Absender für künftige Bestätigungen und Vorabankündigungen. Die Verbindung lässt sich mit einer Testmail prüfen.', 'fields' => [
                 'host' => ['SMTP-Server', 'text'], 'port' => ['Port', 'number'],
                 'encryption' => ['Verschlüsselung', 'select'], 'username' => ['Benutzername', 'text'],
                 'password' => ['SMTP-Passwort', 'password', 'Bei Änderung neu eingeben. Leer lassen, um das gespeicherte Passwort zu behalten.'],
@@ -75,6 +75,24 @@
                         <x-filament::button type="button" color="gray" wire:click="reloadGroup('{{ $group }}')" wire:confirm="Ungespeicherte Eingaben in diesem Bereich verwerfen und neu laden?" wire:loading.attr="disabled">Neu laden</x-filament::button>
                     </div>
                 </form>
+                @if ($group === 'smtp')
+                    <form wire:submit="sendTestMail" class="sd-settings-form" aria-labelledby="smtp-test-title">
+                        <h3 id="smtp-test-title">Testmail senden</h3>
+                        <p>Verwendet die zuletzt gespeicherten SMTP-Einstellungen. Änderungen bitte zuerst speichern. Ein Klick sendet eine echte Testmail an die angegebene Adresse.</p>
+                        <div class="sd-settings-field">
+                            <label for="smtp-test-recipient">Empfängeradresse</label>
+                            <input id="smtp-test-recipient" type="email" wire:model="testRecipient" autocomplete="email" required
+                                aria-invalid="{{ $errors->has('testRecipient') ? 'true' : 'false' }}" aria-describedby="smtp-test-error">
+                            <span id="smtp-test-error" class="sd-field-error" role="alert">@error('testRecipient') {{ $message }} @enderror</span>
+                        </div>
+                        <div class="sd-settings-actions">
+                            <x-filament::button type="submit" wire:loading.attr="disabled">
+                                <span wire:loading.remove wire:target="sendTestMail">Testmail senden</span>
+                                <span wire:loading wire:target="sendTestMail">Wird gesendet …</span>
+                            </x-filament::button>
+                        </div>
+                    </form>
+                @endif
                 @if (! empty($history[$group]))
                     <div class="sd-settings-history"><h3>Letzte Fassungen</h3><ul>
                         @foreach ($history[$group] as $version)

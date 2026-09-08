@@ -19,6 +19,7 @@ Stand: 08.09.2026. P01 ist in Arbeit, nicht abgeschlossen und nicht für Produkt
 - Unveränderliche Preis-/Frist- und Gläubigerfassungen; Konflikterkennung bei parallelem Bearbeiten.
 - Verschlüsselte Gläubiger-IBAN und SMTP-Passwörter, ohne Rückgabe gespeicherter Geheimnisse im Formular.
 - Aktuelle SMTP-/FinTS-Konfiguration mit Änderungszähler und zentralem Audit ohne Geheimniswerte.
+- Expliziter Testmail-Button mit Empfängerfeld und gespeichertem SMTP-Profil.
 
 ## Nachgewiesene Prüfungen
 
@@ -82,6 +83,17 @@ Die zusätzliche lokale Migration ist ausgeführt. Zehn neue MySQL-/Livewire-Tes
 43 Assertions prüfen Zugriff, erneute Schreibautorisierung, Validierung, verschlüsselte
 Speicherung, Geheimniserhalt, Historie und Konflikte. Vite-Build und Blade-Kompilierung bestehen.
 Die authentifizierte visuelle Browserprüfung der vier Tabs steht noch aus.
+
+Im E-Mail-Tab kann ausdrücklich eine Testmail an eine eingegebene Empfängeradresse
+gesendet werden. Ungespeicherte SMTP-Änderungen werden dabei nicht verwendet. Der separate
+Mailer verlangt TLS und nutzt einen Socket-Timeout von 15 Sekunden. Pro Admin ist höchstens
+ein Versuch alle 30 Sekunden erlaubt; der Button ist während der Verarbeitung deaktiviert.
+Serverannahme und tatsächliche Zustellung werden in der Erfolgsmeldung unterschieden.
+Fehler enthalten keine rohen SMTP-Dialoge oder Zugangsdaten; unklare Antworten lösen keinen
+automatischen Wiederholungsversand aus. Audit speichert Anforderung, Fehler oder Annahme
+ohne Nachrichtentext, Empfänger oder Passwort. Der automatische Vertragsversand bleibt offen.
+14 Einstellungstests mit 65 Assertions bestanden, davon vier zusätzliche Testmail-Prüfungen
+mit simuliertem Transport. Kein echter Versand während der Entwicklung ausgeführt.
 
 ## Lokale Verwendung
 
