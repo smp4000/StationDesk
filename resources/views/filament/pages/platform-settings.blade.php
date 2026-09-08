@@ -60,10 +60,15 @@
                                         <option value="starttls">STARTTLS</option><option value="smtps">TLS (SMTPS)</option>
                                     </select>
                                 @else
+                                    @if ($group === 'creditor' && $field === 'iban')<div class="sd-iban-input">@endif
                                     <input id="{{ $fieldId }}" type="{{ $details[1] }}" wire:model="data.{{ $group }}.{{ $field }}"
                                         autocomplete="{{ $details[1] === 'password' ? 'new-password' : 'off' }}"
                                         aria-invalid="{{ $errors->has('data.'.$group.'.'.$field) ? 'true' : 'false' }}"
                                         aria-describedby="{{ $fieldId }}-help {{ $fieldId }}-error">
+                                    @if ($group === 'creditor' && $field === 'iban')
+                                        <x-filament::button type="button" color="gray" x-on:click="$dispatch('open-modal', { id: 'iban-help' })" aria-haspopup="dialog">IBAN-Hilfe</x-filament::button>
+                                        </div>
+                                    @endif
                                 @endif
                                 <small id="{{ $fieldId }}-help">{{ $details[2] ?? '' }}</small>
                                 <span id="{{ $fieldId }}-error" class="sd-field-error" role="alert">@error('data.'.$group.'.'.$field) {{ $message }} @enderror</span>
@@ -94,8 +99,9 @@
                     </form>
                 @endif
                 @if ($group === 'creditor')
-                    <div class="sd-settings-form">
-                        <h3>IBAN-Hilfe · deutscher Bankenstamm</h3>
+                    <x-filament::modal id="iban-help" width="5xl" :close-by-clicking-away="false">
+                        <x-slot name="heading">IBAN-Hilfe · deutscher Bankenstamm</x-slot>
+                        <div class="sd-settings-form">
                         <p>Bankname und BIC stammen aus der importierten Bundesbank-CSV.</p>
                         <p><a href="{{ \App\Filament\Pages\BankDirectoryImport::getUrl() }}">Bankenstamm aktualisieren / neue CSV importieren →</a></p>
                         <form wire:submit="proposeIban" class="sd-settings-grid">
@@ -118,7 +124,11 @@
                             </div>
                             <div><x-filament::button type="button" wire:click="applyIban" wire:loading.attr="disabled">IBAN und BIC ins Formular übernehmen</x-filament::button></div>
                         @endif
-                    </div>
+                        </div>
+                        <x-slot name="footer">
+                            <x-filament::button type="button" color="gray" x-on:click="$dispatch('close-modal', { id: 'iban-help' })">Schließen</x-filament::button>
+                        </x-slot>
+                    </x-filament::modal>
                 @endif
                 @if ($group === 'fints')
                     <div class="sd-settings-form">

@@ -245,7 +245,7 @@ class PlatformSettingsTest extends TestCase
             Livewire::test(PlatformSettings::class)->set('bankCode', '37040044')->set('accountNumber', '532013000')
                 ->call('proposeIban')->assertHasNoErrors()->assertSet('ibanResult.iban', 'DE89370400440532013000')
                 ->assertSet('ibanResult.kind', 'proposal')->assertSet('accountNumber', '')
-                ->call('applyIban')->assertSet('data.creditor.iban', 'DE89370400440532013000')->assertSet('data.creditor.bic', 'COBADEFFXXX')
+                ->call('applyIban')->assertDispatched('close-modal', id: 'iban-help')->assertSet('data.creditor.iban', 'DE89370400440532013000')->assertSet('data.creditor.bic', 'COBADEFFXXX')
                 ->set('ibanCheck', 'de89 3704 0044 0532 0130 00')->call('checkIban')->assertSet('ibanResult.kind', 'checked')
                 ->set('ibanCheck', 'DE89370400440532013001')->call('checkIban')->assertHasErrors('ibanCheck');
             $this->assertSame(0, DB::connection('central')->table('creditor_profile_versions')->count());

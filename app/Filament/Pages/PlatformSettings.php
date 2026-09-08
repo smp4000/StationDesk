@@ -138,6 +138,7 @@ class PlatformSettings extends Page
         $this->data['creditor']['bic'] = $this->ibanResult['bic'];
         $this->ibanResult = [];
         $this->ibanCheck = '';
+        $this->dispatch('close-modal', id: 'iban-help');
         Notification::make()->title('IBAN und BIC in den Gläubigerentwurf übernommen.')->body('Zum dauerhaften Speichern bitte „Gläubiger speichern“ verwenden.')->success()->send();
     }
 

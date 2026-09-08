@@ -3,6 +3,7 @@
 @source '../../../../resources/views/filament/**/*.blade.php';
 @theme { --font-sans: 'Segoe UI', ui-sans-serif, system-ui, sans-serif; }
 :root{--sd-ink:#143c3d;--sd-muted:#60726d;--sd-surface:#fff;--sd-canvas:#f4f5ef;--sd-line:#dce4df}
+.sd-iban-input{display:flex;align-items:center;gap:10px}.sd-iban-input input{min-width:0;flex:1}.sd-iban-input button{flex-shrink:0}@media(max-width:480px){.sd-iban-input{align-items:stretch;flex-direction:column}}
 .fi-body{background:var(--sd-canvas)}
 .fi-sidebar{background:#133e3d}.fi-sidebar-header{background:#133e3d!important}
 .fi-sidebar .fi-logo{color:#f4f5ef}.fi-sidebar-item-label,.fi-sidebar-item-icon{color:#dbe9e0}
