@@ -9,6 +9,6 @@ class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
 
-    /** Keine Standardkonten anlegen; Plattformkonten werden ausschließlich interaktiv erstellt. */
+    /** Keine Standardkonten; Kontoanlage erfolgt interaktiv oder ausdrücklich durch den lokalen Seeder. */
     public function run(): void {}
 }

@@ -268,4 +268,4 @@ noch nicht als Zahlungs- oder Zugriffsautomatik implementiert.
 Es bestehen weiterhin keine veröffentlichten Vertrags-/Mandatstexte. Die lokale
 MySQL-8.4-Instanz auf Port 3307 ist mit der zentralen Datenbank stationdesk eingerichtet.
 Die Einrichtung erfolgte mit dem bestätigten lokalen Root-Zugang; Webprozess und Worker
-verwenden eigene Konten. Produktivbetrieb und Super-Admin-Konto sind weiterhin offen.
+verwenden eigene Konten. Das lokale Super-Admin-Konto ist vorhanden; Produktivbetrieb bleibt offen.

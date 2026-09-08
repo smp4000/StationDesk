@@ -51,7 +51,7 @@ Weiterhin umzusetzen:
 - FinTS-Einreichung, SecureGo-Freigabe, Umsatzabgleich und Rücklastschriften.
 - TOTP-Recovery, vollständige Livewire-Sicherheitsprüfung und Banking-Integrationstests.
 - Rechtstexte, Aufbewahrungsfristen und die noch ungeklärten Regeln aus dem Blueprint.
-- Produktive DB-Verbindungen und ein persönliches Super-Admin-Konto.
+- Produktive DB-Verbindungen.
 
 FinTS-Vorgabe: VR Bank Fulda, SecureGo plus, eigene Produktregistrierungsnummer vorhanden.
 Die Nummer und Bankzugangsdaten sind noch nicht in der Anwendung hinterlegt.
@@ -103,6 +103,21 @@ Persönlichen Super-Admin lokal mit verdeckter Passworteingabe anlegen:
 ~~~powershell
 & 'C:\php84\php.exe' artisan stationdeck:create-super-admin
 ~~~
+
+Alternativ steht der ausdrücklich aufzurufende LocalSuperAdminSeeder bereit:
+
+~~~powershell
+& 'C:\php84\php.exe' artisan db:seed --class=LocalSuperAdminSeeder --no-interaction
+~~~
+
+Er verlangt APP_ENV=local sowie LOCAL_SUPER_ADMIN_NAME, LOCAL_SUPER_ADMIN_EMAIL und
+LOCAL_SUPER_ADMIN_PASSWORD in der privaten .env. Es gibt kein voreingestelltes Passwort.
+Bestehende Konten einschließlich Passwort und TOTP bleiben bei Wiederholung unverändert.
+Der normale DatabaseSeeder legt weiterhin keine Konten an. Die erstmalige Anlage wird
+gemeinsam mit einem Auditereignis in einer Transaktion gespeichert.
+Das gewünschte lokale Konto existiert; das angegebene Passwort wurde gegen seinen Hash geprüft.
+Drei zusätzliche Tests mit acht Assertions prüfen Hashing, Wiederholbarkeit einschließlich
+TOTP-Erhalt, fehlende Passwortkonfiguration und Ablehnung in Produktion auch mit --force.
 
 Zukünftige zentrale Migrationen benötigen einen gesonderten Verwaltungszugang nur im
 Migrationsprozess, da der normale Anwendungsnutzer absichtlich keine DDL-Rechte besitzt.
