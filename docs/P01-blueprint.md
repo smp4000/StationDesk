@@ -18,6 +18,12 @@ Arbeitsname aus der Vorlage: StationDeck. Arbeitsverzeichnis: StationDesk.
 - Vorläufig 1 EUR brutto pro Station und Monat; Preise werden vom Super-Admin gepflegt.
 - 19 % Umsatzsteuer, monatliche Vorauszahlung ab Trial-Ende, kündbar zum Ende der laufenden
   Monatsperiode. Neue Preise gelten nur für neue Verträge.
+- SEPA-Vorabankündigung: zunächst zwei Kalendertage vor Fälligkeit; die Frist ist im
+  Super-Admin einstellbar und muss der jeweils vereinbarten Mandats-/Vertragsfassung entsprechen.
+- Bei Zahlungsverzug zunächst warnen. Nach 30 Tagen Zahlungsverzug Änderungen sperren;
+  Lesen, Export und Zahlungsverwaltung bleiben ausdrücklich zugänglich.
+- Nach wirksamem Vertragsende sechs Monate Exportzugriff gewähren. Diese Zugriffsfrist
+  legt keine pauschale Aufbewahrungs- oder Löschfrist für sämtliche Daten fest.
 - SEPA-Basislastschrift bei der VR Bank Fulda. Aktualisierte Vorgabe: Einreichung und
   Umsatzabruf direkt über FinTS; dies ersetzt den XML-Upload als primären Übertragungsweg.
 - SMTP-Konfiguration im Super-Admin; spätere Partner-Absender als getrennte Zuständigkeit.
@@ -119,11 +125,15 @@ Vertrags- und Steuerwerte dürfen nicht aus dem 1-EUR-Wunsch abgeleitet werden.
 - Erteilungsnachweise sind zugriffsgeschützt. Umfang zusätzlicher Beweisdaten und
   Aufbewahrungszeiten sind mit Bank-/Datenschutzanforderungen abzustimmen.
 - Zum Ende des Trials startet der bestätigte kostenpflichtige Vertrag automatisch.
-  Abrechnungsperioden, Steuersatz, Kündigung und spätere Preisänderungen benötigen noch Regeln.
+  Bestätigt sind monatliche Vorauszahlung, 19 Prozent Umsatzsteuer, Kündigung zum Ende
+  der laufenden Monatsperiode und Preisänderungen ausschließlich für neue Verträge.
 - Jede Forderung und jeder Einzug hat eine stabile Identität. Doppelte Scheduler-Ausführung
   und wiederholter Export dürfen keine zusätzliche Forderung oder zweite Zahlung erzeugen.
-- Vorabankündigung nennt mindestens Einzug, Betrag und Fälligkeit. Frist, Versandkanal und
-  Behandlung fehlgeschlagener Zustellung werden vor produktivem Einzug festgelegt.
+- Vorabankündigung nennt mindestens Einzug, Betrag und Fälligkeit. Bestätigter Ausgangswert:
+  zwei Kalendertage vor Fälligkeit, im Super-Admin einstellbar. Die Anwendung muss die
+  dazugehörige vereinbarte Frist berücksichtigen; eine Einstellungsänderung ersetzt keine
+  Vereinbarung mit dem Zahler. Versand und Behandlung fehlgeschlagener Zustellung sind
+  vor produktivem Einzug zu vervollständigen.
 - XML-Export verwendet das von der Bank akzeptierte pain.008-Profil; genaue Version,
   Zeichensatz-/Adressvorgaben und Einreichungsfristen werden noch verifiziert.
 - XML wird gegen das passende offizielle XSD und fachliche Summen-/Referenzregeln geprüft.
@@ -133,8 +143,14 @@ Vertrags- und Steuerwerte dürfen nicht aus dem 1-EUR-Wunsch abgeleitet werden.
   TAN-Verfahren, Produktregistrierung, Zugangsdatenablage und Wiederaufnahme nach
   unklarer Bankantwort müssen vor Implementierung des Adapters geklärt werden.
 - Export bedeutet nicht Zahlungserfolg. Einreichung, Zahlungseingang, Ablehnung und
-  Rücklastschrift werden gesondert erfasst. Der Rückmeldeweg ist noch zu entscheiden.
+  Rücklastschrift werden gesondert erfasst. Der bestätigte Umsatzabruf erfolgt über FinTS;
+  die konkrete Zuordnung von Bankrückmeldungen zu Forderungen ist noch umzusetzen.
 - Keine automatische erneute Belastung nach Rücklastschrift ohne bestätigte Fachregel.
+- Bei ausbleibender Zahlung zuerst warnen; nach 30 Tagen Zahlungsverzug die schreibenden
+  Fachaktionen sperren. Lesen, Export und Zahlungsverwaltung bleiben nutzbar. Die Ausnahme
+  für Zahlungsverwaltung ist serverseitig von gesperrten Fachänderungen abzugrenzen.
+- Der Exportzugriff nach wirksamem Vertragsende beträgt sechs Monate. Eine automatische
+  Löschung aller Daten allein aufgrund dieses Fristablaufs ist damit nicht beauftragt.
 
 ## 7. Oberflächen und Berechtigungen
 
@@ -194,17 +210,25 @@ Mandanten auf mehrere DB-Hosts verteilen. In P01 nur dokumentieren.
 13. Ein exportierter Batch gilt nicht als bezahlt; Rücklastschriften bleiben nachvollziehbar.
 14. Migrationen und Tenancy werden gegen echte MySQL-Testdatenbanken geprüft.
 15. Deutsche Kommentare, Tab-Formulare, Tastaturbedienung und mobile Registrierung werden geprüft.
+16. Die Vorabankündigungsfrist startet mit zwei Kalendertagen und ist ausschließlich durch
+    den Super-Admin änderbar; vereinbarte Fristen und bereits angekündigte Einzüge bleiben nachvollziehbar.
+17. Nach 30 Tagen Zahlungsverzug werden schreibende Fachaktionen auch bei direkten Requests
+    zurückgewiesen, während Lesen, Export und Zahlungsverwaltung zugänglich bleiben.
+18. Nach wirksamem Vertragsende bleibt der bestätigte Exportzugriff sechs Monate erhalten;
+    Exportberechtigung und datenbezogene Aufbewahrungs-/Löschregeln werden getrennt geprüft.
 
 ## 10. Offene Entscheidungen vor abhängiger Implementierung
 
 - Präzise Fälligkeits-/Bankarbeitstagsregel; Monatsperioden ab Trial-Ende sind bestätigt.
 - Rechtstexte und akzeptierte Online-Mandatserteilung; keine vorgetäuschte rechtliche Freigabe.
-- Bankprofil, Einreichungsfristen und Vorabankündigungsregel.
+- Bankprofil und Einreichungsfristen; die Vorabankündigungsfrist ist mit zwei Kalendertagen
+  als einstellbarem Ausgangswert bestätigt, ihre vertragliche Einbindung noch offen.
 - SMTP-Anbieterdaten werden später im Super-Admin eingetragen; kein Passwort im Chat.
 - Konkrete FinTS-Bankparameter und Freischaltung der benötigten Geschäftsvorfälle.
   Bestätigt sind VR SecureGo plus und eine eigene vorhandene Produktregistrierungsnummer;
   deren Wert wird später in der Konfiguration hinterlegt.
-- Behandlung überfälliger Zahlungen und Zugriff nach Kündigung; kein erfundener Sperrauftrag.
+- Konkreter Warnablauf und Nachweis der Zahlungsbereinigung. Die Änderungssperre nach
+  30 Tagen sowie die Ausnahmen Lesen, Export und Zahlungsverwaltung sind bestätigt.
 - Aufbewahrung, Löschung und Prozess für Plattform-Supportzugriffe auf Kundeninhalte.
 
 ## 11. Lokale Bestandsaufnahme und Quellen
@@ -236,6 +260,10 @@ FinTS ersetzt den ursprünglich vorgesehenen manuellen Upload als Hauptweg. Frü
 XML-Exportdetails dieses Blueprints sind damit nur noch Format-/Nachvollziehbarkeitsanforderungen,
 keine Festlegung auf einen manuellen Einreichungsablauf.
 
-Vor den nächsten Zahlungsabläufen zu beantworten: Frist der SEPA-Vorabankündigung,
-Verhalten bei ausbleibender Zahlung sowie Zugriff nach wirksamem Vertragsende.
-Es bestehen weiterhin keine veröffentlichten Vertrags-/Mandatstexte.
+Bestätigte Folgeentscheidungen: zwei Kalendertage einstellbare Vorabankündigung,
+Warnung vor einer Änderungssperre nach 30 Tagen Zahlungsverzug, fortbestehender Lese-,
+Export- und Zahlungsverwaltungszugriff während dieser Sperre sowie sechs Monate
+Exportzugriff nach wirksamem Vertragsende. Diese Regeln sind bislang geplant,
+noch nicht als Zahlungs- oder Zugriffsautomatik implementiert.
+Es bestehen weiterhin keine veröffentlichten Vertrags-/Mandatstexte. Die dauerhafte
+MySQL-Einrichtung und der hierfür verfügbare Verwaltungszugang sind noch zu klären.

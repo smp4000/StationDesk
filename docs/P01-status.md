@@ -33,6 +33,16 @@ Die vorhandene XAMPP/MariaDB-Instanz auf Port 3306 wurde nicht verändert.
 
 ## Noch offen
 
+Inzwischen fachlich bestätigt, aber noch nicht implementiert:
+
+- Zwei Kalendertage SEPA-Vorabankündigung, im Super-Admin einstellbar.
+- Bei Zahlungsverzug erst warnen und nach 30 Tagen Änderungen sperren; Lesen,
+  Export und Zahlungsverwaltung bleiben möglich.
+- Sechs Monate Exportzugriff nach wirksamem Vertragsende. Das datenbezogene
+  Aufbewahrungs-/Löschkonzept bleibt gesondert auszuarbeiten.
+
+Weiterhin umzusetzen:
+
 - Öffentliches Registrierungsformular mit vollständiger Firmen-/Rechnungsanschrift,
   verbindlicher Vertrags- und Mandatsannahme sowie tatsächlichem Bestätigungsversand.
 - Super-Admin-Einstellungen für Gläubiger, SMTP, FinTS und versionierte Preise.
