@@ -265,5 +265,7 @@ Warnung vor einer Änderungssperre nach 30 Tagen Zahlungsverzug, fortbestehender
 Export- und Zahlungsverwaltungszugriff während dieser Sperre sowie sechs Monate
 Exportzugriff nach wirksamem Vertragsende. Diese Regeln sind bislang geplant,
 noch nicht als Zahlungs- oder Zugriffsautomatik implementiert.
-Es bestehen weiterhin keine veröffentlichten Vertrags-/Mandatstexte. Die dauerhafte
-MySQL-Einrichtung und der hierfür verfügbare Verwaltungszugang sind noch zu klären.
+Es bestehen weiterhin keine veröffentlichten Vertrags-/Mandatstexte. Die lokale
+MySQL-8.4-Instanz auf Port 3307 ist mit der zentralen Datenbank stationdesk eingerichtet.
+Die Einrichtung erfolgte mit dem bestätigten lokalen Root-Zugang; Webprozess und Worker
+verwenden eigene Konten. Produktivbetrieb und Super-Admin-Konto sind weiterhin offen.

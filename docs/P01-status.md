@@ -51,7 +51,7 @@ Weiterhin umzusetzen:
 - FinTS-Einreichung, SecureGo-Freigabe, Umsatzabgleich und Rücklastschriften.
 - TOTP-Recovery, vollständige Livewire-Sicherheitsprüfung und Banking-Integrationstests.
 - Rechtstexte, Aufbewahrungsfristen und die noch ungeklärten Regeln aus dem Blueprint.
-- Dauerhafte lokale/produktive DB-Verbindungen mit geeigneten Konten.
+- Produktive DB-Verbindungen und ein persönliches Super-Admin-Konto.
 
 FinTS-Vorgabe: VR Bank Fulda, SecureGo plus, eigene Produktregistrierungsnummer vorhanden.
 Die Nummer und Bankzugangsdaten sind noch nicht in der Anwendung hinterlegt.
@@ -60,8 +60,35 @@ Keine Bankzugriffe, Zahlungsaufträge oder echten E-Mails wurden ausgeführt.
 ## Lokale Verwendung
 
 PHP 8.4.24: C:/php84/php.exe. Standard-PHP im PATH ist das ungeeignete XAMPP-PHP 8.2.12.
-MySQL 8.4.9: C:/mysql8/bin. DB-Zugang in .env vor echter Nutzung separat einrichten.
+MySQL 8.4.9: C:/mysql8/bin, lokale Instanz auf Port 3307, Datenbank stationdesk.
+Die fünf zentralen Migrationen sind ausgeführt. Die normale .env enthält den eigenen
+Nutzer stationdesk_app mit SELECT, INSERT, UPDATE und DELETE ausschließlich auf stationdesk.
+Der bestätigte lokale Root-Zugang wurde nur für die Einrichtung und Migration verwendet.
+Vorhandene Datenbanken und Konten wurden nicht verändert.
 APP_KEY dauerhaft schützen; bei bestehenden verschlüsselten Daten niemals neu erzeugen.
+
+Die separate, ignorierte .env.worker enthält zusätzlich den Zugang stationdesk_provision.
+Dieser besitzt DDL-/DML-Rechte mit GRANT OPTION ausschließlich für das maskierte
+Mandantenschema-Muster sd\\_t\\_% sowie das von CREATE USER benötigte globale
+Nutzerverwaltungsrecht. Dieses globale Recht ist nicht auf einen Nutzernamenspräfix
+einschränkbar; der Worker ist daher ein privilegierter lokaler Verwaltungsprozess.
+Es bestehen keine globalen ALL-Rechte und keine Datenrechte auf fremde Projektdatenbanken.
+Bei Änderungen gemeinsamer Einstellungen müssen .env und .env.worker synchron gepflegt werden.
+Beide Dateien einschließlich APP_KEY und Passwörtern bleiben außerhalb von Git.
+
+Verifiziert: Migrationsstatus mit dem Anwendungskonto, tatsächliche MySQL-Grants,
+Workerstart mit leerer Warteschlange und erfolgreichem Ende sowie HTTP 200 für /admin/login.
+Die lokale Einrichtung ersetzt keinen vollständigen Provisionierungstest mit diesen Konten.
+Die bestehenden drei Preisberechnungstests bestehen weiterhin.
+
+Die MySQL-Instanz wird bei Bedarf mit ihrer vorhandenen Konfiguration gestartet:
+
+~~~powershell
+Start-Process -FilePath 'C:\mysql8\bin\mysqld.exe' -ArgumentList '--defaults-file=C:\mysql8\my.ini' -WindowStyle Hidden
+~~~
+
+Nur starten, wenn Port 3307 noch nicht belegt ist. Es wurde kein Windows-Autostart eingerichtet.
+Das vorhandene Start-Batch prüft pauschal auf mysqld.exe und überspringt MySQL 8 bei laufendem XAMPP.
 
 Startseite: /. Owner: /owner/login. Plattform: /admin/login.
 Die Startseite bezeichnet die Registrierung ausdrücklich als noch nicht geöffnet.
@@ -71,20 +98,20 @@ Eine Start-/Login-Vorschau ist mit dem lokalen file-Sessiontreiber ohne DB-Zugan
 & 'C:\php84\php.exe' artisan serve --host=127.0.0.1 --port=8088
 ~~~
 
-Nach Einrichtung einer eigenen zentralen Datenbank und passenden Migrationszugangs:
+Persönlichen Super-Admin lokal mit verdeckter Passworteingabe anlegen:
 
 ~~~powershell
-& 'C:\php84\php.exe' artisan migrate --database=central
 & 'C:\php84\php.exe' artisan stationdeck:create-super-admin
 ~~~
 
-Nur der separate Provisionierungsworker erhält PROVISION_DB_USERNAME und
-PROVISION_DB_PASSWORD über seine Prozessumgebung. Kein DDL-/Nutzerverwaltungszugang
-im Webprozess. Der Worker benötigt Berechtigungen für die ausschließlich intern erzeugten
-Schemanamen und Nutzer. Die Produktionsberechtigungen sind noch zu prüfen.
+Zukünftige zentrale Migrationen benötigen einen gesonderten Verwaltungszugang nur im
+Migrationsprozess, da der normale Anwendungsnutzer absichtlich keine DDL-Rechte besitzt.
+Nur der separate Provisionierungsworker lädt PROVISION_DB_USERNAME und
+PROVISION_DB_PASSWORD aus .env.worker. Kein DDL-/Nutzerverwaltungszugang
+im Webprozess. Die Produktionsberechtigungen sind noch zu prüfen.
 
 ~~~powershell
-& 'C:\php84\php.exe' artisan queue:work provisioning --queue=provisioning --timeout=120 --tries=3
+& 'C:\php84\php.exe' artisan queue:work provisioning --env=worker --queue=provisioning --timeout=120 --tries=3
 ~~~
 
 Die Tests erwarten stationdesk_test in der eigens eingerichteten temporären MySQL-Instanz;
