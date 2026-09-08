@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Pages\BankDirectoryImport;
 use App\Filament\Pages\PlatformSettings;
 use App\Models\Owner;
 use App\Models\SuperAdmin;
@@ -16,6 +17,7 @@ use Fhp\Model\SEPAAccount;
 use Fhp\Model\TanMode;
 use Fhp\Protocol\DialogInitialization;
 use Filament\Facades\Filament;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Mail\MailManager;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
@@ -150,6 +152,45 @@ class PlatformSettingsTest extends TestCase
     {
         $this->admin();
         Livewire::test(PlatformSettings::class)->call('save', 'super_admins')->assertNotFound();
+    }
+
+    public function test_admin_can_upload_bank_csv_with_audit_and_idempotent_repeat(): void
+    {
+        $admin = $this->admin();
+        $path = $this->bankCsv();
+        try {
+            $contents = file_get_contents($path);
+            $page = Livewire::test(BankDirectoryImport::class)->set('validFrom', now()->subDay()->toDateString())
+                ->set('validUntil', now()->addDay()->toDateString())
+                ->set('csvFile', UploadedFile::fake()->createWithContent('bundesbank.csv', $contents))
+                ->call('importCsv')->assertHasNoErrors()->assertSet('csvFile', null)->assertSee('Wird verwendet');
+            $page->set('csvFile', UploadedFile::fake()->createWithContent('bundesbank.csv', $contents))->call('importCsv')->assertHasNoErrors();
+            $this->assertSame(1, DB::connection('central')->table('bank_directory_imports')->count());
+            $this->assertSame((string) $admin->id, DB::connection('central')->table('audit_events')->where('action', 'bank_directory.imported')->value('actor_id'));
+        } finally {
+            unlink($path);
+        }
+    }
+
+    public function test_admin_csv_upload_rejects_bad_content_and_invalid_dates(): void
+    {
+        $this->admin();
+        Livewire::test(BankDirectoryImport::class)->set('validFrom', now()->toDateString())->set('validUntil', now()->subDay()->toDateString())
+            ->set('csvFile', UploadedFile::fake()->createWithContent('broken.csv', 'wrong;header'))
+            ->call('importCsv')->assertHasErrors('validUntil')
+            ->set('validUntil', now()->addDay()->toDateString())->call('importCsv')->assertHasErrors('csvFile')->assertSet('csvFile', null);
+        $this->assertSame(0, DB::connection('central')->table('bank_directory_imports')->count());
+    }
+
+    public function test_bank_csv_page_requires_admin_mfa_and_rechecks_write_access(): void
+    {
+        $this->get('/admin/bank-directory-import')->assertRedirect('/admin/login');
+        $admin = $this->admin(false);
+        Livewire::test(BankDirectoryImport::class)->assertForbidden();
+        $admin->saveAppAuthenticationSecret('TESTSECRET');
+        $page = Livewire::test(BankDirectoryImport::class);
+        auth('admin')->logout();
+        $page->call('importCsv')->assertForbidden();
     }
 
     /** Synthetische öffentliche Bankdaten einschließlich Umlauten, führenden Nullen und leerer PAN. */

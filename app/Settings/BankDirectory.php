@@ -2,6 +2,7 @@
 
 namespace App\Settings;
 
+use App\Models\SuperAdmin;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -11,7 +12,7 @@ use RuntimeException;
 class BankDirectory
 {
     /** Liest die öffentliche 13-spaltige Bundesbank-CSV atomar; bestehende Fassungen bleiben erhalten. */
-    public function import(string $path, string $from, string $until): int
+    public function import(string $path, string $from, string $until, ?SuperAdmin $actor = null): int
     {
         Validator::make(['from' => $from, 'until' => $until], [
             'from' => ['required', 'date_format:Y-m-d'], 'until' => ['required', 'date_format:Y-m-d', 'after_or_equal:from'],
@@ -63,7 +64,7 @@ class BankDirectory
             throw new RuntimeException('Die CSV enthält keine führenden Bankdatensätze.');
         }
 
-        return DB::connection('central')->transaction(function () use ($hash, $from, $until, $rows): int {
+        return DB::connection('central')->transaction(function () use ($hash, $from, $until, $rows, $actor): int {
             $db = DB::connection('central');
             $db->table('platform_settings_lock')->where('id', 1)->lockForUpdate()->firstOrFail();
             $existing = $db->table('bank_directory_imports')->where(['sha256' => $hash, 'valid_from' => $from, 'valid_until' => $until])->first();
@@ -76,7 +77,8 @@ class BankDirectory
             foreach (array_chunk($rows, 250) as $chunk) {
                 $db->table('bank_directory_entries')->insert(array_map(fn (array $row): array => $row + ['import_id' => $id], $chunk));
             }
-            $db->table('audit_events')->insert(['actor_type' => 'system', 'action' => 'bank_directory.imported', 'subject_id' => (string) $id, 'occurred_at' => now()]);
+            $db->table('audit_events')->insert(['actor_type' => $actor ? 'super_admin' : 'system', 'actor_id' => $actor ? (string) $actor->id : null,
+                'action' => 'bank_directory.imported', 'subject_id' => (string) $id, 'occurred_at' => now()]);
 
             return $id;
         });

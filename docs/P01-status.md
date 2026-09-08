@@ -141,7 +141,16 @@ Die öffentliche Bundesbank-CSV vom 07.09.2026 bis 06.12.2026 wurde lokal import
 13.760 Datensätze, Importnummer 1. BLZ 53060180 ergibt VR Bank Fulda, BIC GENODE51FUL.
 Quelle: https://www.bundesbank.de/de/aufgaben/unbarer-zahlungsverkehr/serviceangebot/bankleitzahlen/download-bankleitzahlen-602592
 Die heruntergeladene Datei liegt ausschließlich im ignorierten .runtime-Verzeichnis.
-Folgeimporte werden nach Download der öffentlichen CSV ausdrücklich per CLI ausgeführt:
+Folgeimporte sind nach Download der CSV im Admin-Menü „Bankenstamm / CSV-Import“ unter
+/admin/bank-directory-import möglich: ungepackte CSV auswählen, Gültigkeitsbeginn und
+-ende aus der Bundesbank-Veröffentlichung eintragen und importieren. Die Seite zeigt den
+aktiven Stand sowie die letzten 20 Importe. Identische Dateien werden nicht dupliziert;
+zukünftige Stände gelten erst ab ihrem Datum. Bei gleicher Gültigkeit entscheidet die
+jüngste Importnummer. Temporäre Uploads werden nach der Verarbeitung entfernt.
+Der Import verwendet dieselben Prüfungen wie die CLI und protokolliert den ausführenden
+Super-Admin. Drei neue Tests prüfen Upload, Wiederholung, Audit, Fehlerfälle und MFA-/Rollenschutz.
+
+Alternativ bleibt die CLI verfügbar:
 
 ~~~powershell
 & 'C:\php84\php.exe' artisan stationdeck:import-banks 'PFAD-ZUR-CSV' --from=YYYY-MM-DD --until=YYYY-MM-DD

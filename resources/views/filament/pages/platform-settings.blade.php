@@ -97,6 +97,7 @@
                     <div class="sd-settings-form">
                         <h3>IBAN-Hilfe · deutscher Bankenstamm</h3>
                         <p>Bankname und BIC stammen aus der importierten Bundesbank-CSV.</p>
+                        <p><a href="{{ \App\Filament\Pages\BankDirectoryImport::getUrl() }}">Bankenstamm aktualisieren / neue CSV importieren →</a></p>
                         <form wire:submit="proposeIban" class="sd-settings-grid">
                             <div class="sd-settings-field"><label for="iban-bank-code">Bankleitzahl</label><input id="iban-bank-code" wire:model="bankCode" inputmode="numeric" maxlength="8" required>@error('bankCode')<span role="alert" class="sd-field-error">{{ $message }}</span>@enderror</div>
                             <div class="sd-settings-field"><label for="iban-account-number">Kontonummer</label><input id="iban-account-number" wire:model="accountNumber" inputmode="numeric" maxlength="10" autocomplete="off" required>@error('accountNumber')<span role="alert" class="sd-field-error">{{ $message }}</span>@enderror</div>

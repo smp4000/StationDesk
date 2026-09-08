@@ -268,7 +268,10 @@ Der unabhängig mögliche Bankenstamm verwendet versionierte Vollimporte mit SHA
 Gültigkeitszeitraum und Importzeitpunkt. Alle Datensätze einschließlich Filialen und
 Löschkennzeichen bleiben nachvollziehbar; die BLZ-Suche nutzt aktive führende Datensätze.
 Importfehler rollen den gesamten Import zurück. Wiederholter identischer Import ist idempotent.
-Der lokale Import erfolgt per CLI aus einer Bundesbank-CSV, die Bankauswahl im Gläubiger-Tab
+Der Import erfolgt per CLI oder über die Admin-Seite /admin/bank-directory-import mit
+CSV-Upload und Gültigkeitszeitraum. Die Seite zeigt den aktiven Stand und die letzten
+20 Importe; Uploads werden nach Verarbeitung entfernt und der Admin im Audit erfasst.
+Die Bankauswahl im Gläubiger-Tab
 ist auf Super-Admins mit MFA begrenzt. Die Auswahl ergänzt BIC und zeigt Bankname/Ort.
 Das Ergebnis wird erst durch eine eigene Aktion in den Gläubigerentwurf übernommen;
 die dauerhafte Speicherung bleibt getrennt.
