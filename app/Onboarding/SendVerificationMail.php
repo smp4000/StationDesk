@@ -35,8 +35,11 @@ class SendVerificationMail
             ]);
             $url = Filament::getPanel('owner')->getVerifyEmailUrl($owner);
             $minutes = (int) config('auth.verification.expire', 60);
-            $body = "Bitte bestätige deine E-Mail-Adresse für StationDeck:\n\n".$url."\n\nDer Link ist ".$minutes." Minuten gültig. Öffne ihn im Browser, in dem du bei StationDeck angemeldet bist. Erst danach wird deine erste Tankstelle eingerichtet und der 30-Tage-Testzeitraum gestartet.\n\nFalls du dich nicht registriert hast, kannst du diese Nachricht ignorieren.\n";
-            $sent = $mailer->raw($body, function (Message $message) use ($settings, $owner): void {
+            // Tabellenlayout und Inline-Stile unterstützen auch klassische Outlook-Versionen;
+            // eine eigene Textalternative hält den signierten Link ohne HTML-Escaping kopierbar.
+            $sent = $mailer->send(['html' => 'emails.verify-owner', 'text' => 'emails.verify-owner-text'], [
+                'url' => $url, 'minutes' => $minutes, 'firstName' => $owner->first_name,
+            ], function (Message $message) use ($settings, $owner): void {
                 $message->from($settings->from_address, $settings->from_name)->to($owner->email)->subject('StationDeck – E-Mail-Adresse bestätigen');
             });
             if ($sent === null) {

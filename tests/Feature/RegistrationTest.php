@@ -226,6 +226,11 @@ class RegistrationTest extends TestCase
         $this->assertSame('platform@example.test', $message->getFrom()[0]->getAddress());
         $this->assertStringContainsString('/owner/email-verification/verify/', $message->getTextBody());
         $this->assertStringContainsString('signature=', $message->getTextBody());
+        $this->assertStringContainsString('E-Mail-Adresse bestätigen</a>', $message->getHtmlBody());
+        $this->assertStringContainsString('Hallo Erika,', $message->getHtmlBody());
+        $this->assertStringContainsString('<!--[if mso]>', $message->getHtmlBody());
+        preg_match('/href="([^"]+)"/', $message->getHtmlBody(), $button);
+        $this->assertStringContainsString(html_entity_decode($button[1]), $message->getTextBody());
         $this->assertDatabaseHas('audit_events', ['tenant_id' => $owner->tenant_id, 'action' => 'registration.verification_mail_accepted'], 'central');
     }
 }
