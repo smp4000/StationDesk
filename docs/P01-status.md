@@ -21,10 +21,12 @@ Stand: 08.09.2026. P01 ist in Arbeit, nicht abgeschlossen und nicht für Produkt
 - Aktuelle SMTP-/FinTS-Konfiguration mit Änderungszähler und zentralem Audit ohne Geheimniswerte.
 - Expliziter Testmail-Button mit Empfängerfeld und gespeichertem SMTP-Profil.
 - HTTPS-Verbindungstest im FinTS-Tab mit TLS-Zertifikatsprüfung, ohne Banklogin.
+- Versionierter Bundesbank-Bankenstamm aus öffentlicher CSV mit Bank-/BIC-Zuordnung.
+- IBAN-Hilfe: Standardvorschlag aus Kontonummer/BLZ und Prüfung vorhandener deutscher IBAN.
 
 ## Nachgewiesene Prüfungen
 
-50 projektspezifische Tests mit 208 Assertions bestanden auf MySQL 8.4.9.
+55 projektspezifische Tests mit 232 Assertions bestanden auf MySQL 8.4.9.
 Geprüft wurden Daten-/Cache-/Dateitrennung, direkte Fremd-SQL-Abfragen, fehlende DDL-Rechte
 des Tenant-Nutzers, wiederverwendete Models nach Kontextwechsel, Bootstrapfehler,
 Trial-Idempotenz, Worker-Retries, E-Mail-Bestätigung, Guard-Trennung, TOTP-Einrichtung,
@@ -132,6 +134,36 @@ Die Bankadapter sind simuliert; echter Banklogin und SecureGo-plus-Freigabe steh
 Pilotprüfung mit den persönlich eingegebenen Zugangsdaten aus.
 
 ## Lokale Verwendung
+
+### Bundesbank-CSV und IBAN-Hilfe
+
+Die öffentliche Bundesbank-CSV vom 07.09.2026 bis 06.12.2026 wurde lokal importiert:
+13.760 Datensätze, Importnummer 1. BLZ 53060180 ergibt VR Bank Fulda, BIC GENODE51FUL.
+Quelle: https://www.bundesbank.de/de/aufgaben/unbarer-zahlungsverkehr/serviceangebot/bankleitzahlen/download-bankleitzahlen-602592
+Die heruntergeladene Datei liegt ausschließlich im ignorierten .runtime-Verzeichnis.
+Folgeimporte werden nach Download der öffentlichen CSV ausdrücklich per CLI ausgeführt:
+
+~~~powershell
+& 'C:\php84\php.exe' artisan stationdeck:import-banks 'PFAD-ZUR-CSV' --from=YYYY-MM-DD --until=YYYY-MM-DD
+~~~
+
+Der Gültigkeitszeitraum muss der Bundesbank-Veröffentlichung entnommen werden. Dateiformat,
+13 Spalten, UTF-8/Windows-1252, führende Nullen und eindeutige Datensatznummern werden geprüft.
+Leere PAN ist zulässig. Neue Vollstände werden transaktional gespeichert; identische Importe
+werden nicht dupliziert. Ungültige Dateien erzeugen keinen Teilbestand. Führende Datensätze
+und Filialen bleiben unterscheidbar; gelöschte BLZ werden nicht angeboten, angekündigte
+Löschungen werden angezeigt. Außerhalb eines gültigen Importzeitraums ist keine Zuordnung möglich.
+
+Im Gläubiger-Tab kann aus BLZ und Kontonummer ein Standard-IBAN-Vorschlag berechnet werden.
+Der Nutzer hat diese Variante trotz fehlender NExt-Regeln ausdrücklich gewählt. Keine
+bankbezogenen Sonderregeln oder nationalen Kontonummer-Prüfmethoden werden angewendet.
+Das Ergebnis ist mit den Bankunterlagen abzugleichen. Alternativ vorhandene deutsche IBAN
+auf Struktur und Modulo-97-Prüfsumme prüfen. Beide Varianten zeigen Bank/BIC aus der CSV;
+sie bestätigen weder Kontoexistenz noch Kontoinhaberschaft. Erst „Ins Formular übernehmen“
+füllt IBAN/BIC im Gläubigerentwurf; dauerhaftes Speichern bleibt separat.
+Fünf zusätzliche Tests prüfen Import, Idempotenz, Kodierung, führende Nullen, atomare Fehler,
+Berechnung, IBAN-Prüfung, gelöschte/abgelaufene Banken und erneute Autorisierung.
+Regelgrenzen: https://www.bundesbank.de/de/aufgaben/unbarer-zahlungsverkehr/serviceangebot/iban-regeln
 
 PHP 8.4.24: C:/php84/php.exe. Standard-PHP im PATH ist das ungeeignete XAMPP-PHP 8.2.12.
 MySQL 8.4.9: C:/mysql8/bin, lokale Instanz auf Port 3307, Datenbank stationdesk.

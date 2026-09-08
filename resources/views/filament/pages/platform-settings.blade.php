@@ -93,6 +93,32 @@
                         </div>
                     </form>
                 @endif
+                @if ($group === 'creditor')
+                    <div class="sd-settings-form">
+                        <h3>IBAN-Hilfe · deutscher Bankenstamm</h3>
+                        <p>Bankname und BIC stammen aus der importierten Bundesbank-CSV.</p>
+                        <form wire:submit="proposeIban" class="sd-settings-grid">
+                            <div class="sd-settings-field"><label for="iban-bank-code">Bankleitzahl</label><input id="iban-bank-code" wire:model="bankCode" inputmode="numeric" maxlength="8" required>@error('bankCode')<span role="alert" class="sd-field-error">{{ $message }}</span>@enderror</div>
+                            <div class="sd-settings-field"><label for="iban-account-number">Kontonummer</label><input id="iban-account-number" wire:model="accountNumber" inputmode="numeric" maxlength="10" autocomplete="off" required>@error('accountNumber')<span role="alert" class="sd-field-error">{{ $message }}</span>@enderror</div>
+                            <p class="sd-settings-note">Berechnet einen Standard-IBAN-Vorschlag. Bankbezogene Sonderregeln und die Kontonummer-Prüfmethode sind nicht enthalten. Bitte das Ergebnis vor Verwendung mit deinen Bankunterlagen abgleichen.</p>
+                            <div><x-filament::button type="submit" wire:loading.attr="disabled">Standard-IBAN berechnen</x-filament::button></div>
+                        </form>
+                        <form wire:submit="checkIban" class="sd-settings-grid">
+                            <div class="sd-settings-field"><label for="iban-check">Vorhandene deutsche IBAN</label><input id="iban-check" wire:model="ibanCheck" autocomplete="off" maxlength="34" required>@error('ibanCheck')<span role="alert" class="sd-field-error">{{ $message }}</span>@enderror</div>
+                            <div><x-filament::button type="submit" color="gray" wire:loading.attr="disabled">IBAN prüfen und Bank ermitteln</x-filament::button></div>
+                        </form>
+                        @if ($ibanResult)
+                            <div class="sd-settings-note" role="status">
+                                <p><strong>{{ $ibanResult['kind'] === 'proposal' ? 'Standard-IBAN-Vorschlag – nicht bankseitig bestätigt' : 'Struktur und Prüfsumme stimmen – Kontoexistenz nicht geprüft' }}</strong></p>
+                                <p>{{ chunk_split($ibanResult['iban'], 4, ' ') }}</p>
+                                <p>{{ $ibanResult['name'] }} · {{ $ibanResult['city'] }} · BIC: {{ $ibanResult['bic'] ?: 'Nicht hinterlegt' }}</p>
+                                <p>Bundesbank-Daten gültig bis {{ $ibanResult['valid_until'] }}.</p>
+                                @if ($ibanResult['deletion_planned'])<p>Für diese Bankleitzahl ist eine Löschung angekündigt. Bitte die aktuelle Kontoverbindung bei der Bank prüfen.</p>@endif
+                            </div>
+                            <div><x-filament::button type="button" wire:click="applyIban" wire:loading.attr="disabled">IBAN und BIC ins Formular übernehmen</x-filament::button></div>
+                        @endif
+                    </div>
+                @endif
                 @if ($group === 'fints')
                     <div class="sd-settings-form">
                         <h3>Verbindung prüfen</h3>

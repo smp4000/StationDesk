@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Models\SuperAdmin;
+use App\Settings\BankDirectory;
 use App\Settings\FintsReadOnlyTest;
 use App\Settings\PlatformSettingsStore;
 use App\Settings\SendPlatformTestMail;
@@ -25,6 +26,15 @@ class PlatformSettings extends Page
     public array $data = [];
 
     public string $testRecipient = '';
+
+    public string $bankCode = '';
+
+    public string $accountNumber = '';
+
+    public string $ibanCheck = '';
+
+    #[Locked]
+    public array $ibanResult = [];
 
     public string $bankLogin = '';
 
@@ -85,6 +95,50 @@ class PlatformSettings extends Page
     {
         $this->loadGroup($group);
         $this->resetValidation();
+    }
+
+    /** Erstellt auf ausdrücklichen Wunsch nur einen Standardvorschlag aus aktueller Bankzuordnung. */
+    public function proposeIban(): void
+    {
+        app(PlatformSettingsStore::class)->authorize();
+        $this->resetValidation();
+        $this->ibanResult = [];
+        $accountNumber = $this->accountNumber;
+        $this->accountNumber = '';
+        try {
+            $this->ibanResult = app(BankDirectory::class)->propose($this->bankCode, $accountNumber);
+        } catch (ValidationException $exception) {
+            foreach ($exception->errors() as $field => $messages) {
+                $this->addError($field, $messages[0]);
+            }
+        }
+    }
+
+    /** Prüft eine vom Nutzer eingetragene IBAN; gespeicherte Gläubiger-IBANs bleiben verborgen. */
+    public function checkIban(): void
+    {
+        app(PlatformSettingsStore::class)->authorize();
+        $this->resetValidation();
+        $this->ibanResult = [];
+        try {
+            $this->ibanResult = app(BankDirectory::class)->check($this->ibanCheck);
+        } catch (ValidationException $exception) {
+            foreach ($exception->errors() as $field => $messages) {
+                $this->addError($field, $messages[0]);
+            }
+        }
+    }
+
+    /** Übernimmt das sichtbare Ergebnis ausdrücklich nur in den Entwurf; Gläubiger speichern bleibt separat. */
+    public function applyIban(): void
+    {
+        app(PlatformSettingsStore::class)->authorize();
+        abort_unless(isset($this->ibanResult['iban']), 422);
+        $this->data['creditor']['iban'] = $this->ibanResult['iban'];
+        $this->data['creditor']['bic'] = $this->ibanResult['bic'];
+        $this->ibanResult = [];
+        $this->ibanCheck = '';
+        Notification::make()->title('IBAN und BIC in den Gläubigerentwurf übernommen.')->body('Zum dauerhaften Speichern bitte „Gläubiger speichern“ verwenden.')->success()->send();
     }
 
     /** Sendet nur auf ausdrücklichen Button-Klick mit den gespeicherten SMTP-Einstellungen. */

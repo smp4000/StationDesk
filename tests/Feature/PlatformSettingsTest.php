@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Filament\Pages\PlatformSettings;
 use App\Models\Owner;
 use App\Models\SuperAdmin;
+use App\Settings\BankDirectory;
 use App\Settings\FintsReadOnlyAdapter;
 use App\Settings\FintsReadOnlyTest;
 use App\Settings\PlatformSettingsStore;
@@ -149,6 +150,89 @@ class PlatformSettingsTest extends TestCase
     {
         $this->admin();
         Livewire::test(PlatformSettings::class)->call('save', 'super_admins')->assertNotFound();
+    }
+
+    /** Synthetische öffentliche Bankdaten einschließlich Umlauten, führenden Nullen und leerer PAN. */
+    private function bankCsv(string $change = 'U', bool $invalid = false): string
+    {
+        $header = 'Bankleitzahl;Merkmal;Bezeichnung;PLZ;Ort;Kurzbezeichnung;PAN;BIC;Prüfzifferberechnungsmethode;Datensatznummer;Änderungskennzeichen;Bankleitzahllöschung;Nachfolge-Bankleitzahl';
+        $body = '37040044;1;Testbank Köln;01067;Köln;Testbank;;COBADEFFXXX;00;000001;'.$change.';0;00000000';
+        $path = tempnam(sys_get_temp_dir(), 'sd-banks-');
+        file_put_contents($path, mb_convert_encoding($header."\n".$body."\n".($invalid ? 'broken;row' : ''), 'Windows-1252', 'UTF-8'));
+
+        return $path;
+    }
+
+    public function test_bank_csv_is_idempotent_and_preserves_leading_zeros_and_encoding(): void
+    {
+        $this->admin();
+        $path = $this->bankCsv();
+        try {
+            $directory = app(BankDirectory::class);
+            $from = now()->subDay()->toDateString();
+            $until = now()->addDay()->toDateString();
+            $first = $directory->import($path, $from, $until);
+            $this->assertSame($first, $directory->import($path, $from, $until));
+            $this->assertSame('01067', DB::connection('central')->table('bank_directory_entries')->value('postal_code'));
+            $this->assertSame('Testbank Köln', $directory->find('37040044')['name']);
+            $this->assertSame(1, DB::connection('central')->table('bank_directory_entries')->count());
+        } finally {
+            unlink($path);
+        }
+    }
+
+    public function test_invalid_bank_csv_does_not_create_partial_import(): void
+    {
+        $path = $this->bankCsv(invalid: true);
+        try {
+            app(BankDirectory::class)->import($path, now()->toDateString(), now()->addDay()->toDateString());
+            $this->fail('Defekte CSV muss abgewiesen werden.');
+        } catch (RuntimeException) {
+            $this->assertSame(0, DB::connection('central')->table('bank_directory_imports')->count());
+            $this->assertSame(0, DB::connection('central')->table('bank_directory_entries')->count());
+        } finally {
+            unlink($path);
+        }
+    }
+
+    public function test_standard_iban_proposal_and_existing_iban_use_bank_directory(): void
+    {
+        $this->admin();
+        $path = $this->bankCsv();
+        try {
+            app(BankDirectory::class)->import($path, now()->subDay()->toDateString(), now()->addDay()->toDateString());
+            Livewire::test(PlatformSettings::class)->set('bankCode', '37040044')->set('accountNumber', '532013000')
+                ->call('proposeIban')->assertHasNoErrors()->assertSet('ibanResult.iban', 'DE89370400440532013000')
+                ->assertSet('ibanResult.kind', 'proposal')->assertSet('accountNumber', '')
+                ->call('applyIban')->assertSet('data.creditor.iban', 'DE89370400440532013000')->assertSet('data.creditor.bic', 'COBADEFFXXX')
+                ->set('ibanCheck', 'de89 3704 0044 0532 0130 00')->call('checkIban')->assertSet('ibanResult.kind', 'checked')
+                ->set('ibanCheck', 'DE89370400440532013001')->call('checkIban')->assertHasErrors('ibanCheck');
+            $this->assertSame(0, DB::connection('central')->table('creditor_profile_versions')->count());
+        } finally {
+            unlink($path);
+        }
+    }
+
+    public function test_deleted_and_expired_banks_cannot_generate_iban(): void
+    {
+        $this->admin();
+        $path = $this->bankCsv('D');
+        try {
+            app(BankDirectory::class)->import($path, now()->subDay()->toDateString(), now()->addDay()->toDateString());
+            Livewire::test(PlatformSettings::class)->set('bankCode', '37040044')->set('accountNumber', '532013000')->call('proposeIban')->assertHasErrors('bankCode');
+            DB::connection('central')->table('bank_directory_imports')->update(['valid_until' => now()->subDay()->toDateString()]);
+            Livewire::test(PlatformSettings::class)->set('bankCode', '37040044')->set('accountNumber', '532013000')->call('proposeIban')->assertHasErrors('bankCode');
+        } finally {
+            unlink($path);
+        }
+    }
+
+    public function test_iban_helper_rechecks_admin_authorization(): void
+    {
+        $this->admin();
+        $page = Livewire::test(PlatformSettings::class);
+        auth('admin')->logout();
+        $page->call('proposeIban')->assertForbidden();
     }
 
     /** Freigegebener Endpunkt, jedoch stets durch einen simulierten Bankadapter ohne Netzwerk ersetzt. */

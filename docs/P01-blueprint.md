@@ -255,6 +255,26 @@ Diese Quellen ersetzen keine Bestätigung der konkreten Bankvereinbarung oder re
 
 ## 12. Fortsetzung
 
+### Bankenstamm und gewünschter IBAN-Generator
+
+Beauftragt sind Bundesbank-CSV-Import, Bankzuordnung und darauf aufbauende IBAN-Ermittlung.
+Die öffentliche CSV stellt 13 Felder bereit, jedoch keine IBAN-Regelkennung. Die erweiterte
+Datei mit Feld 14 und die Regeln sind laut Bundesbank nur über NExt erhältlich. Der Nutzer
+hat keinen NExt-Zugang und wünscht ausdrücklich beide Wege: vorhandene IBAN prüfen sowie
+Kontonummer und BLZ zur Standardberechnung verwenden. Die Berechnung wird als ungeprüfter
+Standard-IBAN-Vorschlag gekennzeichnet und berücksichtigt keine institutsindividuellen
+Sonderregeln oder nationalen Kontonummer-Prüfverfahren. Keine Bankbestätigung behaupten.
+Der unabhängig mögliche Bankenstamm verwendet versionierte Vollimporte mit SHA-256,
+Gültigkeitszeitraum und Importzeitpunkt. Alle Datensätze einschließlich Filialen und
+Löschkennzeichen bleiben nachvollziehbar; die BLZ-Suche nutzt aktive führende Datensätze.
+Importfehler rollen den gesamten Import zurück. Wiederholter identischer Import ist idempotent.
+Der lokale Import erfolgt per CLI aus einer Bundesbank-CSV, die Bankauswahl im Gläubiger-Tab
+ist auf Super-Admins mit MFA begrenzt. Die Auswahl ergänzt BIC und zeigt Bankname/Ort.
+Das Ergebnis wird erst durch eine eigene Aktion in den Gläubigerentwurf übernommen;
+die dauerhafte Speicherung bleibt getrennt.
+Gültigkeitsdatum, führende Nullen, Kodierung, Löschungen, doppelte Datensätze, ungültige Zeilen
+und Rollen werden getestet. CSV-Dateien bleiben außerhalb von Git; nur Importcode wird versioniert.
+
 ### Aktueller Umsetzungsschritt: Plattform-Einstellungen
 
 Die bestätigten Einstellungsbereiche werden unter /admin/platform-settings mit vier
