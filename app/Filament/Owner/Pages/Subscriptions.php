@@ -4,6 +4,7 @@ namespace App\Filament\Owner\Pages;
 
 use App\Billing\ManageSubscriptions;
 use App\Models\Station;
+use App\Tenancy\TenantContext;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Livewire\Attributes\Locked;
@@ -26,9 +27,10 @@ class Subscriptions extends Page
     public function prepareCancellation(int $id): void
     {
         $quote = app(ManageSubscriptions::class)->quote($id);
-        $station = Station::query()->findOrFail($quote['station_id']);
+        $name = app(TenantContext::class)->forOwnerIfNeeded(app(ManageSubscriptions::class)->owner(),
+            fn () => Station::query()->findOrFail($quote['station_id'])->name);
         $this->resetValidation();
-        $this->cancellation = ['id' => $id, 'end' => $quote['cancellation_end'], 'station' => $station->name];
+        $this->cancellation = ['id' => $id, 'end' => $quote['cancellation_end'], 'station' => $name];
         $this->dispatch('open-modal', id: 'cancel-subscription');
     }
 
@@ -47,6 +49,9 @@ class Subscriptions extends Page
     {
         $subscriptions = app(ManageSubscriptions::class)->all();
 
-        return ['subscriptions' => $subscriptions, 'stationNames' => Station::query()->pluck('name', 'id')];
+        $names = app(TenantContext::class)->forOwnerIfNeeded(app(ManageSubscriptions::class)->owner(),
+            fn () => Station::query()->pluck('name', 'id'));
+
+        return ['subscriptions' => $subscriptions, 'stationNames' => $names];
     }
 }

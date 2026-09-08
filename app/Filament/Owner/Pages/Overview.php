@@ -2,7 +2,9 @@
 
 namespace App\Filament\Owner\Pages;
 
+use App\Models\Owner;
 use App\Models\Station;
+use App\Tenancy\TenantContext;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\DB;
 
@@ -20,9 +22,13 @@ class Overview extends Page
     /** Liefert ausschließlich tatsächlich vorhandene Stationen aus der aktiven Datenbank. */
     protected function getViewData(): array
     {
-        return [
-            'stations' => Station::query()->orderBy('name')->get(),
+        $owner = auth('web')->user();
+        abort_unless($owner instanceof Owner, 403);
+
+        return app(TenantContext::class)->forOwnerIfNeeded($owner, fn () => [
+            // Die Ansicht erhält reine Werte; kein Fachmodell verlässt seinen begrenzten Kontext.
+            'stations' => Station::query()->orderBy('name')->get()->map(fn (Station $station) => (object) $station->getAttributes()),
             'subscriptions' => DB::connection('central')->table('subscriptions')->where('tenant_id', tenant()->getTenantKey())->get()->keyBy('station_id'),
-        ];
+        ]);
     }
 }

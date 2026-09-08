@@ -3,13 +3,14 @@
 namespace Tests\Feature;
 
 use App\Billing\ManageSubscriptions;
-use App\Filament\Owner\Pages\Subscriptions;
+use App\Filament\Owner\Pages\Overview;
 use App\Models\Owner;
 use App\Models\Tenant;
 use App\Tenancy\Provisioner;
 use App\Tenancy\TenantContext;
 use Carbon\Carbon;
 use Filament\Facades\Filament;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -174,12 +175,36 @@ class SubscriptionManagementTest extends TestCase
         app(Provisioner::class)->provision($tenant->id);
         $this->actingAs($owner, 'web');
         $id = DB::connection('central')->table('subscriptions')->where('tenant_id', $tenant->id)->value('id');
-        app(TenantContext::class)->forOwner($owner->fresh(), function () use ($id): void {
-            $page = Livewire::test(Subscriptions::class)->assertSee('Abo-Teststation')->assertSee('1,00 € brutto')
-                ->call('prepareCancellation', $id)->assertDispatched('open-modal');
-            $this->assertNull(DB::connection('central')->table('subscriptions')->where('id', $id)->value('cancelled_at'));
-            $page->call('confirmCancellation')->assertDispatched('close-modal')->assertNotified('Kündigung vorgemerkt')->assertSet('cancellation', null);
-        });
+        $html = $this->get('/owner/subscriptions')->assertOk()->getContent();
+        preg_match_all('/wire:snapshot="([^"]+)"/', $html, $matches);
+        $snapshot = collect($matches[1])->map(fn ($encoded) => html_entity_decode($encoded, ENT_QUOTES))
+            ->first(fn ($json) => array_key_exists('cancellation', json_decode($json, true)['data']));
+        $this->assertNotNull($snapshot);
+        $this->assertFalse(tenancy()->initialized);
+        // Echte getrennte HTTP-Anfragen: die persistente Middleware endet vor der jeweiligen Aktion.
+        $prepared = $this->postJson(Livewire::getUpdateUri(), ['components' => [[
+            'snapshot' => $snapshot, 'updates' => [], 'calls' => [['path' => '', 'method' => 'prepareCancellation', 'params' => [$id]]],
+        ]]], ['X-Livewire' => 'true'])->assertOk();
+        $this->assertStringContainsString('Abo-Teststation', $prepared->json('components.0.effects.html'));
+        $this->assertNull(DB::connection('central')->table('subscriptions')->where('id', $id)->value('cancelled_at'));
+        $this->assertFalse(tenancy()->initialized);
+        $this->postJson(Livewire::getUpdateUri(), ['components' => [[
+            'snapshot' => $prepared->json('components.0.snapshot'), 'updates' => [],
+            'calls' => [['path' => '', 'method' => 'confirmCancellation', 'params' => []]],
+        ]]], ['X-Livewire' => 'true'])->assertOk();
+        $this->assertFalse(tenancy()->initialized);
         $this->assertDatabaseHas('subscription_cancellations', ['subscription_id' => $id, 'requested_by' => $owner->id], 'central');
+        $other = $this->owner();
+        app(TenantContext::class)->forOwner($owner, function () use ($other): void {
+            try {
+                app(TenantContext::class)->forOwnerIfNeeded($other, fn () => $this->fail('Fremder Kontext wurde wiederverwendet.'));
+                $this->fail('Fremde Owner-Zuordnung wurde akzeptiert.');
+            } catch (AuthorizationException) {
+                $this->assertTrue(tenancy()->initialized);
+            }
+        });
+        $this->assertFalse(tenancy()->initialized);
+        Livewire::test(Overview::class)->assertSee('Abo-Teststation');
+        $this->assertFalse(tenancy()->initialized);
     }
 }

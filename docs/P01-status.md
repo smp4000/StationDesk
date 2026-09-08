@@ -36,7 +36,12 @@ Stand: 09.09.2026. P01 ist in Arbeit, nicht abgeschlossen und nicht für Produkt
 
 ## Nachgewiesene Prüfungen
 
-84 projektspezifische Tests mit 420 Assertions bestanden auf MySQL 8.4.9.
+84 projektspezifische Tests mit 424 Assertions bestanden auf MySQL 8.4.9.
+Der Abo-Dialog wird inzwischen über echte getrennte HTTP-/Livewire-Anfragen geprüft.
+Die persistente Middleware beendet ihren Kontext vor der Aktion; Stationsabfragen in
+Aktionen und Rendern verwenden deshalb zusätzlich begrenzte, frisch autorisierte
+Owner-Kontexte. Ein bereits bestehender fremder Kontext wird abgewiesen. Der frühere
+Dialogtest mit dauerhaft offenem Testkontext wurde ersetzt, weil er diesen Fehler verdeckte.
 Neun zusätzliche Abo-/Periodentests prüfen Monatsanker einschließlich Schaltjahr,
 Trial-Kündigung, Monatskündigung, unveränderte Endtermine bei Wiederholung, überholte
 Dialogbestätigung, fremde Verträge, Produktionssperre und den echten Livewire-Modalablauf.
