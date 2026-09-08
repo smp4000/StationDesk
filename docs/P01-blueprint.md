@@ -258,6 +258,35 @@ Diese Quellen ersetzen keine Bestätigung der konkreten Bankvereinbarung oder re
 
 ## 12. Fortsetzung
 
+### Lokale Aboübersicht und Kündigung
+
+Freigegeben: stationsbezogene Aboübersicht und Kündigung im lokalen Testbetrieb. Ergänzend
+bestätigt: Eine Kündigung während des Trials wird erst zum Trial-Ende wirksam; bis dahin
+bleibt der Zugang bestehen. Danach erfolgt keine Verlängerung. Nach dem Trial wird zum
+Ende der laufenden Monatsperiode gekündigt. Echte Vertragsabschlüsse und Einzüge bleiben gesperrt.
+
+Die Owner-Seite /owner/subscriptions zeigt Station, gespeicherten Bruttopreis, Steuer,
+Trial-Ende, aktuelle Periode und Kündigungstermin. Ein eigener Modal-Dialog nennt Station
+und konkreten Endtermin vor der endgültigen Bestätigung. Gast, unbestätigte Owner,
+fremde Abo-IDs, nicht bereitgestellte Mandanten und echte Verträge sind für diese
+Testkündigung gesperrt. Zuordnung stets aus der persistierten Owner-Identität.
+
+Monatsgrenzen werden vom vorhandenen unveränderlichen UTC-Anker abgeleitet und für die
+Anzeige nach Europe/Berlin umgerechnet. Beginn inklusive, Ende exklusiv; ein zu kurzer
+Monat kürzt nur seine eigene Grenze, ohne den ursprünglichen Monatstag zu verschieben.
+Die Periodenanzeige ist eine Simulation und erzeugt weder Forderungen noch Bankaufträge.
+
+Eine gesperrte Vertragszeile, eindeutiger Kündigungsdatensatz und gemeinsamer Audit-Commit
+machen Wiederholungen idempotent. Ein zwischen Dialogöffnung und Bestätigung überholter
+Endtermin wird abgelehnt und muss neu bestätigt werden. Kündigungen werden nicht gelöscht
+oder nachträglich zurückgenommen; eine Rücknahmefunktion wurde noch nicht beauftragt.
+Das erreichte Ende wird aus dem gespeicherten Endtermin angezeigt. Die Kündigung löscht
+keine Stations-/Personaldaten. Exportfunktionen und produktive Zugriffsbeschränkungen nach
+Vertragsende bleiben Teil des noch offenen Export-/Aufbewahrungsablaufs.
+
+Geprüft werden Trial- und Monatskündigung, Monatsende/Schaltjahr, exakte Periodengrenzen,
+überholte Bestätigungen, Duplikate, Rollen, fremde Verträge und der vollständige Modalablauf.
+
 ### Bankenstamm und gewünschter IBAN-Generator
 
 Beauftragt sind Bundesbank-CSV-Import, Bankzuordnung und darauf aufbauende IBAN-Ermittlung.

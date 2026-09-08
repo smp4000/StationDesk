@@ -1,6 +1,6 @@
 # P01 – Umsetzungsstand
 
-Stand: 08.09.2026. P01 ist in Arbeit, nicht abgeschlossen und nicht für Produktion freigegeben.
+Stand: 09.09.2026. P01 ist in Arbeit, nicht abgeschlossen und nicht für Produktion freigegeben.
 
 ## Implementiert
 
@@ -21,6 +21,9 @@ Stand: 08.09.2026. P01 ist in Arbeit, nicht abgeschlossen und nicht für Produkt
 - Fehlgeschlagene Bereitstellung mit bereinigten Fehlercodes und administrativem Retry.
 - Owner-Stationsübersicht, eigene Anmeldeseiten und eigenes responsives Theme.
 - Brutto-/Nettoberechnung mit Centbeträgen und 19 Prozent Umsatzsteuer.
+- Owner-Seite /owner/subscriptions: gespeicherter Stationspreis, Trial-Ende, simulierte Monatsperiode und Kündigungstermin.
+- Lokale Testkündigung mit Modal-Bestätigung, erneut geprüftem Endtermin, Zeilensperre, eindeutigem Kündigungsnachweis und zentralem Audit.
+- Trial-Kündigung zum Trial-Ende; danach Kündigung zum Ende der laufenden Monatsperiode. Keine Datenlöschung durch Kündigung.
 - Interaktiver CLI-Befehl stationdeck:create-super-admin mit verdeckter Passworteingabe.
 - Plattform-Einstellungen unter /admin/platform-settings: Abrechnung, Gläubiger, E-Mail und FinTS.
 - Unveränderliche Preis-/Frist- und Gläubigerfassungen; Konflikterkennung bei parallelem Bearbeiten.
@@ -33,7 +36,10 @@ Stand: 08.09.2026. P01 ist in Arbeit, nicht abgeschlossen und nicht für Produkt
 
 ## Nachgewiesene Prüfungen
 
-75 projektspezifische Tests mit 386 Assertions bestanden auf MySQL 8.4.9.
+84 projektspezifische Tests mit 420 Assertions bestanden auf MySQL 8.4.9.
+Neun zusätzliche Abo-/Periodentests prüfen Monatsanker einschließlich Schaltjahr,
+Trial-Kündigung, Monatskündigung, unveränderte Endtermine bei Wiederholung, überholte
+Dialogbestätigung, fremde Verträge, Produktionssperre und den echten Livewire-Modalablauf.
 Sechs zusätzliche Wiederherstellungstests prüfen Owner-/Admin-Trennung, Reset-Anfrage,
 Tokenverbrauch und Ablauf, Passwortwechsel mit Remember-Token-Erneuerung, SMTP-Ausfälle
 sowie übereinstimmende HTML-/Textlinks. Auch der nach der Mailgestaltung noch offene
@@ -74,7 +80,8 @@ Weiterhin umzusetzen:
 - Anbindung der gespeicherten Einstellungen an Vertragsannahme und echten FinTS-Zahlungsverkehr.
   Speichern allein löst keine Netzwerkaktionen aus; die ausdrücklichen Testaktionen tun dies.
 - Modulkatalog und automatisierte Upgrades bereits bereitgestellter Mandanten.
-- Periodische Abrechnung, Kündigung, Belege und SEPA-Vorabankündigungen.
+- Echte periodische Abrechnung, produktive Kündigungsabwicklung, Belege und SEPA-Vorabankündigungen.
+  Die lokale Periodenanzeige und Testkündigung erzeugen keine Forderungen oder Einzüge.
 - FinTS-Einreichung, SecureGo-Freigabe, Umsatzabgleich und Rücklastschriften.
 - TOTP-Recovery, vollständige Livewire-Sicherheitsprüfung und Banking-Integrationstests.
 - Rechtstexte, Aufbewahrungsfristen und die noch ungeklärten Regeln aus dem Blueprint.
