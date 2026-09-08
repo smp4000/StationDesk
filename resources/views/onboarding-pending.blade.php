@@ -1,0 +1,3 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Dein Arbeitsplatz · StationDeck</title>@vite('resources/css/app.css')</head>
+<body class="sd-public"><main class="sd-welcome"><a class="sd-wordmark" href="/">Station<span>Deck</span></a><p class="sd-eyebrow">DEIN START</p><h1>Dein Arbeitsplatz<br>wird vorbereitet.</h1><p>Die Einrichtung ist noch nicht abgeschlossen. Dein Testzeitraum beginnt erst, wenn deine Tankstelle bereitsteht.</p><a class="sd-primary-link" href="{{ url('/owner') }}">Status aktualisieren</a></main></body></html>
