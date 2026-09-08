@@ -12,6 +12,7 @@ use Illuminate\Mail\MailManager;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 use Mockery;
@@ -140,6 +141,39 @@ class PlatformSettingsTest extends TestCase
     {
         $this->admin();
         Livewire::test(PlatformSettings::class)->call('save', 'super_admins')->assertNotFound();
+    }
+
+    public function test_fints_connection_reports_http_without_claiming_bank_login(): void
+    {
+        $this->admin();
+        app(PlatformSettingsStore::class)->save('fints', ['bank_name' => 'Testbank', 'bank_code' => '12345678',
+            'endpoint' => 'https://fints2.atruvia.de/cgi-bin/hbciservlet', 'product_id' => 'test-product'], 0);
+        Http::preventStrayRequests();
+        Http::fake(['https://fints2.atruvia.de/*' => Http::response('', 405)]);
+        Livewire::test(PlatformSettings::class)->call('testFintsConnection')->assertHasNoErrors()
+            ->assertSee('HTTP-Status 405')->assertSee('noch nicht bestätigt');
+        Http::assertSent(fn ($request): bool => $request->method() === 'HEAD' && $request->body() === '');
+        Http::assertSentCount(1);
+    }
+
+    public function test_fints_connection_rejects_internal_endpoint(): void
+    {
+        $this->admin();
+        app(PlatformSettingsStore::class)->save('fints', ['bank_name' => 'Testbank', 'bank_code' => '12345678',
+            'endpoint' => 'https://127.0.0.1/private', 'product_id' => 'test-product'], 0);
+        Http::fake();
+        Livewire::test(PlatformSettings::class)->call('testFintsConnection')->assertHasErrors('fintsTest');
+        Http::assertNothingSent();
+    }
+
+    public function test_fints_connection_requires_settings_and_current_admin(): void
+    {
+        $this->admin();
+        Http::fake();
+        $page = Livewire::test(PlatformSettings::class)->call('testFintsConnection')->assertHasErrors('fintsTest');
+        auth('admin')->logout();
+        $page->call('testFintsConnection')->assertForbidden();
+        Http::assertNothingSent();
     }
 
     /** Ausschließlich fiktive SMTP-Werte, die Tests ersetzen jeden tatsächlichen Transport. */

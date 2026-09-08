@@ -20,6 +20,7 @@ Stand: 08.09.2026. P01 ist in Arbeit, nicht abgeschlossen und nicht für Produkt
 - Verschlüsselte Gläubiger-IBAN und SMTP-Passwörter, ohne Rückgabe gespeicherter Geheimnisse im Formular.
 - Aktuelle SMTP-/FinTS-Konfiguration mit Änderungszähler und zentralem Audit ohne Geheimniswerte.
 - Expliziter Testmail-Button mit Empfängerfeld und gespeichertem SMTP-Profil.
+- HTTPS-Verbindungstest im FinTS-Tab mit TLS-Zertifikatsprüfung, ohne Banklogin.
 
 ## Nachgewiesene Prüfungen
 
@@ -94,6 +95,20 @@ automatischen Wiederholungsversand aus. Audit speichert Anforderung, Fehler oder
 ohne Nachrichtentext, Empfänger oder Passwort. Der automatische Vertragsversand bleibt offen.
 14 Einstellungstests mit 65 Assertions bestanden, davon vier zusätzliche Testmail-Prüfungen
 mit simuliertem Transport. Kein echter Versand während der Entwicklung ausgeführt.
+
+FinTS-Verbindungstest: gespeicherte Adresse, HEAD-Anfrage, fünf Sekunden Verbindungs-
+und 15 Sekunden Gesamtzeitlimit, keine Weiterleitungen, keine Bankzugangsdaten.
+Für den Pilot ist ausschließlich https://fints2.atruvia.de/cgi-bin/hbciservlet freigegeben.
+Ein erreichbarer HTTPS-Endpunkt einschließlich HTTP-Fehlerstatus bestätigt keinen FinTS-Login.
+Pro Admin ist ein Versuch alle 30 Sekunden möglich. 17 Einstellungstests mit 79 Assertions
+bestehen, einschließlich drei neuer Prüfungen für Erreichbarkeitsanzeige, interne Zieladressen,
+fehlende Konfiguration und erneute Autorisierung. HTTP-Aufrufe sind dabei simuliert.
+
+Zusätzlich beauftragt: reine Kontenabfrage mit SecureGo-plus-Freigabe. Die Bank bestimmt,
+ob sie für den konkreten Lesevorgang eine Freigabe verlangt. nemiah/php-fints 4.1.0 wurde
+per Composer-Dry-Run auf Kompatibilität geprüft: ein neues Paket, keine weiteren Updates.
+Die in AGENTS.md erforderliche Freigabe dieser Abhängigkeit ist angefragt und steht aus.
+Noch keine Bibliothek installiert, keine PIN erfasst und kein Bankdialog ausgeführt.
 
 ## Lokale Verwendung
 

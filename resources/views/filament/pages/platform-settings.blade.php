@@ -93,6 +93,15 @@
                         </div>
                     </form>
                 @endif
+                @if ($group === 'fints')
+                    <div class="sd-settings-form">
+                        <h3>Verbindung prüfen</h3>
+                        <p>Prüft die gespeicherte Bankadresse und das TLS-Zertifikat. Es werden keine Bankzugangsdaten übertragen. Ein HTTP-Status bestätigt noch keinen FinTS-Login.</p>
+                        <div class="sd-settings-actions"><x-filament::button type="button" wire:click="testFintsConnection" wire:loading.attr="disabled">Verbindung testen</x-filament::button></div>
+                        @error('fintsTest') <p role="alert" class="sd-field-error">{{ $message }}</p> @enderror
+                        @if ($fintsConnectionResult) <p role="status">{{ $fintsConnectionResult }}</p> @endif
+                    </div>
+                @endif
                 @if (! empty($history[$group]))
                     <div class="sd-settings-history"><h3>Letzte Fassungen</h3><ul>
                         @foreach ($history[$group] as $version)

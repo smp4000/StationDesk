@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use App\Models\SuperAdmin;
 use App\Settings\PlatformSettingsStore;
 use App\Settings\SendPlatformTestMail;
+use App\Settings\TestFintsConnection;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Validation\ValidationException;
@@ -23,6 +24,9 @@ class PlatformSettings extends Page
     public array $data = [];
 
     public string $testRecipient = '';
+
+    #[Locked]
+    public string $fintsConnectionResult = '';
 
     #[Locked]
     public array $revisions = [];
@@ -90,6 +94,22 @@ class PlatformSettings extends Page
             return;
         }
         Notification::make()->title('Testmail vom SMTP-Server angenommen')->body('Bitte Posteingang und Spamordner prüfen. Die Annahme bestätigt noch keine Zustellung.')->success()->send();
+    }
+
+    /** Startet einen getrennten HTTPS-Test ohne Bankzugangsdaten oder Zahlungsaufträge. */
+    public function testFintsConnection(): void
+    {
+        app(PlatformSettingsStore::class)->authorize();
+        $this->resetValidation('fintsTest');
+        $this->fintsConnectionResult = '';
+        try {
+            $status = app(TestFintsConnection::class)->run();
+            $this->fintsConnectionResult = 'HTTPS-Endpunkt erreicht, HTTP-Status '.$status.'. TLS-Zertifikat geprüft. Banklogin und FinTS-Funktion sind damit noch nicht bestätigt.';
+        } catch (ValidationException $exception) {
+            $this->addError('fintsTest', $exception->errors()['fintsTest'][0]);
+        } catch (RuntimeException) {
+            $this->addError('fintsTest', 'HTTPS-Verbindung nicht bestätigt. Bitte Netzwerk, Bankadresse und Zertifikatsprüfung kontrollieren.');
+        }
     }
 
     /** Liefert nur öffentliche Historienmetadaten für die versionierten Bereiche. */
